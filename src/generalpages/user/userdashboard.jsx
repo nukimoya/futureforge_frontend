@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from 'react-router-dom';
 import {  Briefcase,  Sparkles,  LogOut,  BarChart2,  User,  FileText,  TrendingUp, Calendar, Award, Target, ChevronRight, Download, MessageCircle, Bell, Settings } from "lucide-react";
+import StartTestModal from "../../components/startTestModal";
 
 const Dashboard = () => {
   const [careerRecommendations, setCareerRecommendations] = useState([
@@ -39,6 +41,9 @@ const Dashboard = () => {
   const username = "Alex Johnson";
   const email = "alex.johnson@email.com";
   const role = "Professional";
+  const navigate = useNavigate();
+
+  const [showTestInstructions, setShowTestInstructions] = useState(false);
 
   // Mock data for demo purposes
   const mockStats = {
@@ -63,9 +68,9 @@ const Dashboard = () => {
     console.log("Logout clicked");
   };
 
-  const handleTestClick = () => {
-    console.log("Test clicked");
-  };
+//   const handleTestClick = () => {
+//     console.log("Test clicked");
+//   };
 
   const getTestStatusInfo = (status) => {
     const statusMap = {
@@ -89,6 +94,18 @@ const Dashboard = () => {
       }
     };
     return statusMap[status] || statusMap["Not started"];
+  };
+
+//   const handleTakeTestClick = () => {
+//     setShowTestInstructions(true);
+//   };
+
+  const handleCloseInstructions = () => {
+    setShowTestInstructions(false);
+  };
+
+  const handleBeginTest = () => {
+    setShowTestInstructions(false);
   };
 
   const statusInfo = getTestStatusInfo(testStatus);
@@ -467,6 +484,13 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      <StartTestModal
+          isOpen={showTestInstructions}
+          onClose={handleCloseInstructions}
+          onBeginTest={handleBeginTest}
+          testDuration={12}
+        />
     </div>
   );
 };

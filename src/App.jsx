@@ -5,10 +5,13 @@ import LandingPage from './generalpages/landingpagee.jsx'
 import Signup from './generalpages/signup.jsx'
 import Login from './generalpages/login.jsx'
 import Dashboard from './generalpages/user/userdashboard.jsx'
+import WelcomePage from './generalpages/user/userTest.jsx'
+import TestComponent from './components/testComponent.jsx'
 
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { AuthContext } from './context/authContext.jsx'
+
 
 function App() {
   const { user } = useContext(AuthContext);
@@ -22,7 +25,9 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/welcome-page" element={ActiveUser ? < WelcomePage /> : <Navigate to="/login" />} />
         <Route path="/dashboard" element={ActiveUser ? <Dashboard /> : <Navigate to="/login" />} />
+        <Route path="/test" element={ActiveUser ? <TestComponent /> : <Navigate to="/login" />} />
         <Route path="*" element={<h1>404 Not Found</h1>} />
       </Route>
     )
