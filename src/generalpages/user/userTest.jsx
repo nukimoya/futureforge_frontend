@@ -1,27 +1,43 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { useNavigate } from 'react-router-dom';
 import {  Sparkles,  LogOut,  User,  BarChart2,  Target, ChevronRight, Clock, CheckCircle, ArrowRight, Brain, Lightbulb,  Zap, Star, Bell, Settings } from "lucide-react";
+import { AuthContext } from "../../context/authContext";
 import StartTestModal from "../../components/startTestModal";
+
+import { toast } from 'react-toastify';
+
 
 const WelcomePage = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [showTestInstructions, setShowTestInstructions] = useState(false);
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const { 
+    // user,
+     dispatch } = useContext(AuthContext);
   
   const username = "Alex Johnson";
   const email = "alex.johnson@email.com";
   const role = "Professional";
 
+
   const handleLogout = () => {
-    console.log("Logout clicked");
+    try {
+      dispatch({ type: "LOGOUT" });
+      localStorage.removeItem("user");
+      navigate('/');
+      toast.success('Logged out successfully');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Failed to log out');
+    }
   };
 
-    const handleTakeTestClick = () => {
+  const handleTakeTestClick = () => {
     setShowTestInstructions(true);
   };
 
-    const handleCloseInstructions = () => {
+  const handleCloseInstructions = () => {
     setShowTestInstructions(false);
   };
 

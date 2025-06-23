@@ -26,7 +26,7 @@ function SubmissionScreen({ isSubmitted }) {
   // Navigate only when progress is 100
   useEffect(() => {
     if (progress >= 100) {
-      navigate('/dashboard');
+      navigate('/recommendations');
     }
   }, [progress, navigate]);
 
@@ -48,7 +48,7 @@ function SubmissionScreen({ isSubmitted }) {
         />
       </div>
 
-      <p className="mt-3 text-sm text-gray-500">Redirecting to your dashboard...</p>
+      <p className="mt-3 text-sm text-gray-500">Redirecting to your Personalized Recommendations...</p>
     </div>
   );
 }

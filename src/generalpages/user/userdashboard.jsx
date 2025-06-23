@@ -1,26 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { useNavigate } from 'react-router-dom';
 import {  Briefcase,  Sparkles,  LogOut,  BarChart2,  User,  FileText,  TrendingUp, Calendar, Award, Target, ChevronRight, Download, MessageCircle, Bell, Settings } from "lucide-react";
+import { AuthContext } from "../../context/authContext";
 import StartTestModal from "../../components/startTestModal";
 
+import { toast } from 'react-toastify';
 const Dashboard = () => {
-  const [careerRecommendations, setCareerRecommendations] = useState([
-    {
-      title: "UX/UI Designer",
-      summary: "Create intuitive and engaging user experiences for digital products",
-      score: 94
-    },
-    {
-      title: "Product Manager",
-      summary: "Lead product development and strategy for innovative solutions",
-      score: 89
-    },
-    {
-      title: "Data Analyst",
-      summary: "Transform data into actionable insights for business decisions",
-      score: 87
-    }
-  ]);
+  const [careerRecommendations, setCareerRecommendations] = useState([]);
   const [testStatus, setTestStatus] = useState("Completed");
   const [learningPaths, setLearningPaths] = useState([
     {
@@ -37,13 +23,42 @@ const Dashboard = () => {
     }
   ]);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { 
+    // user,
+     dispatch } = useContext(AuthContext);
 
   const username = "Alex Johnson";
   const email = "alex.johnson@email.com";
   const role = "Professional";
-  const navigate = useNavigate();
 
   const [showTestInstructions, setShowTestInstructions] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
+  const handleLogout = () => {
+    try {
+      dispatch({ type: "LOGOUT" });
+      localStorage.removeItem("user");
+      navigate('/');
+      toast.success('Logged out successfully');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Failed to log out');
+    }
+  };
+
+  const handleTakeTestClick = () => {
+    setShowTestInstructions(true);
+  };
+
+    const handleCloseInstructions = () => {
+    setShowTestInstructions(false);
+  };
+
+  const handleBeginTest = () => {
+    setShowTestInstructions(false);
+    navigate('/test');
+  };
 
   // Mock data for demo purposes
   const mockStats = {
@@ -64,13 +79,6 @@ const Dashboard = () => {
     setTimeout(() => setLoading(false), 1000);
   }, []);
 
-  const handleLogout = () => {
-    console.log("Logout clicked");
-  };
-
-//   const handleTestClick = () => {
-//     console.log("Test clicked");
-//   };
 
   const getTestStatusInfo = (status) => {
     const statusMap = {
@@ -96,18 +104,6 @@ const Dashboard = () => {
     return statusMap[status] || statusMap["Not started"];
   };
 
-//   const handleTakeTestClick = () => {
-//     setShowTestInstructions(true);
-//   };
-
-  const handleCloseInstructions = () => {
-    setShowTestInstructions(false);
-  };
-
-  const handleBeginTest = () => {
-    setShowTestInstructions(false);
-  };
-
   const statusInfo = getTestStatusInfo(testStatus);
 
   return (
@@ -116,34 +112,74 @@ const Dashboard = () => {
       <nav className="bg-white/80 backdrop-blur-md border-b border-slate-200/60 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3 group cursor-pointer">
-            <div className="relative">
+            <div className="flex items-center space-x-3 group cursor-pointer">
+              <div className="relative">
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-purple-500/30 transition-all duration-300 group-hover:scale-110">
-                <Sparkles className="w-5 h-5 text-white group-hover:rotate-12 transition-transform duration-100" />
+                  <Sparkles className="w-5 h-5 text-white group-hover:rotate-12 transition-transform duration-100" />
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 rounded-xl opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-300"></div>
-            </div>
-            <div className="flex flex-col">
+              </div>
+              <div className="flex flex-col">
                 <span className="text-xl font-bold bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-                FutureForge
+                  FutureForge
                 </span>
-            </div>
+              </div>
             </div>
             
-            <div className="flex items-center space-x-3">
-              <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                <Bell className="w-5 h-5 text-slate-600" />
-              </button>
-              <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                <Settings className="w-5 h-5 text-slate-600" />
-              </button>
+            <div className="relative">
               <button
-                onClick={handleLogout}
-                className="flex items-center space-x-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                onMouseEnter={() => setShowUserMenu(true)}
+                onMouseLeave={() => setShowUserMenu(false)}
+                className="flex items-center space-x-2 p-2 hover:bg-slate-100 rounded-lg transition-colors"
               >
-                <LogOut className="w-4 h-4" />
-                <span className="text-sm font-medium">Logout</span>
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-bold text-white">
+                    {username.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <User className="w-4 h-4 text-slate-600" />
               </button>
+
+              {showUserMenu && (
+                <div 
+                  className="absolute right-0 top-full mt-2 w-72 bg-white/95 backdrop-blur-md border border-slate-200/60 rounded-2xl shadow-xl p-4"
+                  onMouseEnter={() => setShowUserMenu(true)}
+                  onMouseLeave={() => setShowUserMenu(false)}
+                >
+                  <div className="flex items-center space-x-3 mb-4 pb-4 border-b border-slate-200">
+                    <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+                      <span className="text-lg font-bold text-white">
+                        {username.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-slate-800">{username}</h4>
+                      <p className="text-sm text-slate-600">{email}</p>
+                      <span className="inline-block px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium mt-1">
+                        {role}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <button className="w-full flex items-center space-x-3 p-2 hover:bg-slate-50 rounded-lg transition-colors text-left">
+                      <Bell className="w-4 h-4 text-slate-600" />
+                      <span className="text-sm text-slate-700">Notifications</span>
+                    </button>
+                    <button className="w-full flex items-center space-x-3 p-2 hover:bg-slate-50 rounded-lg transition-colors text-left">
+                      <Settings className="w-4 h-4 text-slate-600" />
+                      <span className="text-sm text-slate-700">Settings</span>
+                    </button>
+                    <button 
+                      onClick={handleLogout}
+                      className="w-full flex items-center space-x-3 p-2 hover:bg-red-50 rounded-lg transition-colors text-left text-red-600"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span className="text-sm font-medium">Logout</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -273,7 +309,7 @@ const Dashboard = () => {
                   <p>⏱️ Takes about 8-10 minutes</p>
                 </div>
                 <button
-                  onClick={() => navigate("/test")}
+                  onClick={handleTakeTestClick}
                   className="group bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-4 rounded-2xl font-semibold transition-all duration-300 flex items-center space-x-2 shadow-lg hover:shadow-xl"
                 >
                   <span>{testStatus === "Completed" ? "Retake Assessment" : "Start Assessment"}</span>
@@ -488,7 +524,7 @@ const Dashboard = () => {
       <StartTestModal
           isOpen={showTestInstructions}
           onClose={handleCloseInstructions}
-          onBeginTest={handleBeginTest}
+          onStartTest={handleBeginTest}
           testDuration={12}
         />
     </div>

@@ -41,6 +41,10 @@ export const useAxios = () => {
       (error) => {
         if (error.response?.status === 401) {
           errorHandler(error); // can trigger logout or show toast
+          localStorage.removeItem('user');
+          setTimeout(() => {
+              window.location.href = '/login';
+            }, 2000); // 2 seconds (adjust to your toast duration)
         }
         return Promise.reject(error);
       }

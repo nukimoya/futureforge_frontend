@@ -1,10 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import { ChevronLeft, ChevronRight, CheckCircle, AlertCircle } from 'lucide-react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, CheckCircle, AlertCircle,Sparkles,  LogOut,  User, Bell, Settings } from 'lucide-react';
 import { useAxios } from '../config/api';
+import { toast } from 'react-toastify';
 import SubmissionScreen from './testCompleted';
+import { AuthContext } from '../context/authContext';
 
 const TestComponent = () => {
+  const api = useAxios();
+  const navigate = useNavigate();
+  const { dispatch } = useContext(AuthContext);
+
+
   const [questions, setQuestions] = useState([]);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -13,7 +22,13 @@ const TestComponent = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [sessionId, setSessionId] = useState(null);
-  const api = useAxios();
+  const currentQuestion = questions[currentQuestionIndex];
+  const currentAnswers = answers[currentQuestion?.id] || [];
+  
+
+  const username = "Alex Johnson";
+  const email = "alex.johnson@email.com";
+  const role = "Professional";
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -32,15 +47,28 @@ const TestComponent = () => {
       } catch (err) {
         console.error('❌ Failed to start test or fetch questions:', err);
         setError(err.response?.data?.message || err.message || 'Unknown error');
+        toast.error(`Failed to Fetch Questions`, {
+          position: 'top-right',
+          autoClose: 5000,
+          pauseOnHover: true,
+          draggable: true,
+          theme: 'colored'
+        });
       } finally {
         setLoading(false);
       }
     };
   
     fetchQuestions();
-  }, [api, sessionId]);
+  }, [api]);
 
-  const handleAnswerChange = (questionId, optionIndex, isMultiple = false) => {
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
+
+  const handleAnswerChange = useCallback( (questionId, optionIndex, isMultiple = false) => {
     setAnswers(prev => {
       if (isMultiple) {
         const currentAnswers = prev[questionId] || [];
@@ -53,15 +81,15 @@ const TestComponent = () => {
       }
     });
     setShowValidationError(false);
-  };
+  }, []);
 
-  const isCurrentQuestionAnswered = () => {
+  const isCurrentQuestionAnswered =useCallback( () => {
     const currentQuestion = questions[currentQuestionIndex];
     const currentAnswers = answers[currentQuestion?.id];
     return currentAnswers && currentAnswers.length > 0;
-  };
+  }, [answers, currentQuestionIndex, questions]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (!isCurrentQuestionAnswered()) {
       setShowValidationError(true);
       return;
@@ -71,7 +99,7 @@ const TestComponent = () => {
       setCurrentQuestionIndex(prev => prev + 1);
       setShowValidationError(false);
     }
-  };
+  }, [currentQuestionIndex, isCurrentQuestionAnswered, questions.length]);
 
   const handlePrevious = () => {
     if (currentQuestionIndex > 0) {
@@ -80,7 +108,7 @@ const TestComponent = () => {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback( async () => {
     if (submitting) return;
     setSubmitting(true);
   
@@ -129,8 +157,43 @@ const TestComponent = () => {
     } finally {
       setSubmitting(false);
     }
-  };
+  }, [answers, api, isCurrentQuestionAnswered, questions, sessionId, submitting]);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Do nothing if modal or input field is focused
+      if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+  
+      const numberPressed = parseInt(e.key);
+      if (numberPressed >= 1 && numberPressed <= 4) {
+        const index = numberPressed - 1;
+        if (currentQuestion?.options?.[index]) {
+          handleAnswerChange(currentQuestion.id, index, currentQuestion.type === 'multiple');
+        }
+      } else if (e.key === 'Enter') {
+        if (currentQuestionIndex < questions.length - 1) {
+          handleNext();
+        } else {
+          handleSubmit();
+        }
+      }
+    };
+  
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentQuestion, currentQuestionIndex, questions, answers, handleAnswerChange, handleNext, handleSubmit]);
+  
+  const handleLogout = () => {
+    try {
+      dispatch({ type: "LOGOUT" });
+      localStorage.removeItem("user");
+      navigate('/');
+      toast.success('Logged out successfully');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Failed to log out');
+    }
+  };
   const getProgressPercentage = () => {
     const answeredCount = questions.filter(q => answers[q.id] && answers[q.id].length > 0).length;
     return (answeredCount / questions.length) * 100;
@@ -173,14 +236,88 @@ const TestComponent = () => {
     );
   }
 
-  const currentQuestion = questions[currentQuestionIndex];
-  const currentAnswers = answers[currentQuestion.id] || [];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40">
+      {/* Updated Navbar */}
+      <nav className="bg-white/80 backdrop-blur-md border-b border-slate-200/60 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-6 py-1">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3 group cursor-pointer">
+              <div className="relative">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-purple-500/30 transition-all duration-300 group-hover:scale-110">
+                  <Sparkles className="w-5 h-5 text-white group-hover:rotate-12 transition-transform duration-100" />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 rounded-xl opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-300"></div>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xl font-bold bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+                  FutureForge
+                </span>
+              </div>
+            </div>
+            
+            <div className="relative">
+              <button
+                onMouseEnter={() => setShowUserMenu(true)}
+                onMouseLeave={() => setShowUserMenu(false)}
+                className="flex items-center space-x-2 p-2 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-bold text-white">
+                    {username.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <User className="w-4 h-4 text-slate-600" />
+              </button>
+
+              {showUserMenu && (
+                <div 
+                  className="absolute right-0 top-full mt-2 w-72 bg-white/95 backdrop-blur-md border border-slate-200/60 rounded-2xl shadow-xl p-4"
+                  onMouseEnter={() => setShowUserMenu(true)}
+                  onMouseLeave={() => setShowUserMenu(false)}
+                >
+                  <div className="flex items-center space-x-3 mb-4 pb-4 border-b border-slate-200">
+                    <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+                      <span className="text-lg font-bold text-white">
+                        {username.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-slate-800">{username}</h4>
+                      <p className="text-sm text-slate-600">{email}</p>
+                      <span className="inline-block px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium mt-1">
+                        {role}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <button className="w-full flex items-center space-x-3 p-2 hover:bg-slate-50 rounded-lg transition-colors text-left">
+                      <Bell className="w-4 h-4 text-slate-600" />
+                      <span className="text-sm text-slate-700">Notifications</span>
+                    </button>
+                    <button className="w-full flex items-center space-x-3 p-2 hover:bg-slate-50 rounded-lg transition-colors text-left">
+                      <Settings className="w-4 h-4 text-slate-600" />
+                      <span className="text-sm text-slate-700">Settings</span>
+                    </button>
+                    <button 
+                      onClick={handleLogout}
+                      className="w-full flex items-center space-x-3 p-2 hover:bg-red-50 rounded-lg transition-colors text-left text-red-600"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span className="text-sm font-medium">Logout</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </nav>
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-4">
           <h1 className="text-3xl font-bold text-gray-800 text-center mb-4">Aptitude Test</h1>
           
           {/* Progress Bar */}

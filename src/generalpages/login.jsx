@@ -71,7 +71,7 @@ const Login = () => {
     setErrors(prev => ({ ...prev, [name]: error }));
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     const newErrors = {};
     Object.keys(formData).forEach(key => {
       const error = validateField(key, formData[key]);
@@ -115,7 +115,7 @@ const Login = () => {
         setIsSubmitting(false);
       }
     }
-  };
+  }, [formData, validateField, api, dispatch]);
   
 
   const handleVerification = async () => {
@@ -152,6 +152,7 @@ const Login = () => {
     }
   };
 
+  
   useEffect(() => {
     if (!codeSent) return;
   
@@ -187,6 +188,18 @@ const Login = () => {
   };
 
   const isFormValid = formData.email && formData.password && !errors.email && !errors.password;
+
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Enter' && currentStep === 'login' && isFormValid && !isSubmitting) {
+        handleSubmit();
+      }
+    };
+  
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentStep, isFormValid, isSubmitting, handleSubmit]);
 
   // Verification Step (for unverified accounts)
   if (currentStep === 'verify') {
