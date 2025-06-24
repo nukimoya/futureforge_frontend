@@ -5,9 +5,12 @@ import { AuthContext } from "../../context/authContext";
 import StartTestModal from "../../components/startTestModal";
 
 import { toast } from 'react-toastify';
+import { useAxios } from "../../config/api";
 const Dashboard = () => {
   const [careerRecommendations, setCareerRecommendations] = useState([]);
   const [testStatus, setTestStatus] = useState("Completed");
+  const [error, setError] = useState('');
+  const [userProfile, setUserProfile] = useState({})
   const [learningPaths, setLearningPaths] = useState([
     {
       title: "UX Design Fundamentals",
@@ -24,13 +27,12 @@ const Dashboard = () => {
   ]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { 
-    // user,
-     dispatch } = useContext(AuthContext);
+  const { user, dispatch } = useContext(AuthContext);
+  const api = useAxios()
 
-  const username = "Alex Johnson";
-  const email = "alex.johnson@email.com";
-  const role = "Professional";
+  const username = user?.data?.user?.username;
+  const email = user?.data?.user?.email;
+  const role = user?.data?.user?.role;
 
   const [showTestInstructions, setShowTestInstructions] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -44,6 +46,15 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Logout error:', error);
       toast.error('Failed to log out');
+    }
+  };
+
+  const handleOpenRecommendations = () => {
+    try {
+      navigate('/recommendations');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Failed to open recommendations');
     }
   };
 
@@ -78,6 +89,57 @@ const Dashboard = () => {
     // Simulate loading state
     setTimeout(() => setLoading(false), 1000);
   }, []);
+
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      try {
+        setLoading(true);
+  
+        const response = await api.get('/api/recommendations');
+  
+        if (!response.data) {
+          throw new Error('No data returned from server');
+        }
+  
+        const data = response.data;
+  
+        // Optional: populate the user profile section
+        const profile = {
+          personalityProfile: data.profile?.personalityProfile || '',
+          interestSummary: data.profile?.interestSummary || '',
+          metaSummary: data.profile?.metaSummary || '',
+          completedAt: data.completedAt
+            ? new Date(data.completedAt).toLocaleDateString()
+            : new Date().toLocaleDateString()
+        };
+        setUserProfile(profile);
+  
+        // Format the recommendations for the frontend UI
+        const formattedRecommendations = (data.recommendations || []).map((rec) => ({
+          title: rec.title || 'Untitled Career',
+          summary: rec.summary || 'No summary available.',
+          score: rec.score || 0
+        }));
+  
+        setCareerRecommendations(formattedRecommendations);
+      } catch (err) {
+        console.error('❌ Failed to fetch recommendations:', err);
+        setError(err.response?.data?.message || err.message || 'Unknown error');
+        toast.error(`Failed to load recommendations`, {
+          position: 'top-right',
+          autoClose: 5000,
+          pauseOnHover: true,
+          draggable: true,
+          theme: 'colored'
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchRecommendations();
+  }, [api]);
+  
 
 
   const getTestStatusInfo = (status) => {
@@ -226,6 +288,16 @@ const Dashboard = () => {
               <p className="text-sm text-slate-600 font-medium">Assessments Completed</p>
             </div>
 
+            <div className="bg-white/60 backdrop-blur-sm border border-slate-200/60 rounded-2xl p-6 hover:shadow-lg hover:shadow-amber-500/10 transition-all duration-300">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                  <Target className="w-6 h-6 text-amber-600" />
+                </div>
+                <span className="text-2xl font-bold text-slate-800">{mockStats.careerMatches}</span>
+              </div>
+              <p className="text-sm text-slate-600 font-medium">Career Matches</p>
+            </div>
+
             <div className="bg-white/60 backdrop-blur-sm border border-slate-200/60 rounded-2xl p-6 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300">
               <div className="flex items-center justify-between mb-3">
                 <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
@@ -246,15 +318,6 @@ const Dashboard = () => {
               <p className="text-sm text-slate-600 font-medium">Skills Gained</p>
             </div>
 
-            <div className="bg-white/60 backdrop-blur-sm border border-slate-200/60 rounded-2xl p-6 hover:shadow-lg hover:shadow-amber-500/10 transition-all duration-300">
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
-                  <Target className="w-6 h-6 text-amber-600" />
-                </div>
-                <span className="text-2xl font-bold text-slate-800">{mockStats.careerMatches}</span>
-              </div>
-              <p className="text-sm text-slate-600 font-medium">Career Matches</p>
-            </div>
           </div>
         </div>
 
@@ -331,7 +394,7 @@ const Dashboard = () => {
                   </div>
                 </div>
                 {careerRecommendations.length > 0 && (
-                  <button className="text-blue-600 hover:text-blue-700 font-medium text-sm flex items-center space-x-1">
+                  <button onClick={handleOpenRecommendations} className="text-blue-600 hover:text-blue-700 font-medium text-sm flex items-center space-x-1">
                     <span>View All</span>
                     <ChevronRight className="w-4 h-4" />
                   </button>
@@ -386,18 +449,28 @@ const Dashboard = () => {
             </div>
 
             {/* Learning Paths */}
-            <div className="bg-white/70 backdrop-blur-sm border border-slate-200/60 rounded-3xl p-8">
-              <div className="flex items-center space-x-3 mb-6">
-                <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center">
-                  <FileText className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-slate-800">Learning Paths</h3>
-                  <p className="text-slate-600">Curated courses to boost your career</p>
-                </div>
+            <div className="relative">
+              {/* Overlay */}
+              <div className="absolute inset-0 bg-white/10 backdrop-blur-sm z-20 flex items-center justify-center rounded-3xl">
+                <span className="text-xl font-semibold text-slate-700 bg-white/90 px-4 py-2 rounded-lg shadow-sm border border-slate-300">
+                  🚧 Coming Soon
+                </span>
               </div>
+              
 
-              {learningPaths.length === 0 ? (
+              {/* Original Content */}
+              <div className="bg-white/70 backdrop-blur-sm border border-slate-200/60 rounded-3xl p-8 relative z-10">
+                <div className="flex items-center space-x-3 mb-6">
+                  <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center">
+                    <FileText className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-slate-800">Learning Paths</h3>
+                    <p className="text-slate-600">Curated courses to boost your career</p>
+                  </div>
+                </div>
+
+                {learningPaths.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <FileText className="w-8 h-8 text-slate-400" />
@@ -438,6 +511,7 @@ const Dashboard = () => {
                   ))}
                 </div>
               )}
+              </div>
             </div>
           </div>
 

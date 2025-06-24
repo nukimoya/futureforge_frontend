@@ -238,10 +238,17 @@ const TestComponent = () => {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40 relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-10 left-10 w-72 h-72 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-10 right-10 w-96 h-96 bg-gradient-to-br from-purple-400/15 to-pink-400/15 rounded-full blur-3xl animate-pulse animation-delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-gradient-to-br from-indigo-400/10 to-blue-400/10 rounded-full blur-3xl animate-pulse animation-delay-2000"></div>
+      </div>
+
       {/* Updated Navbar */}
-      <nav className="bg-white/80 backdrop-blur-md border-b border-slate-200/60 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-1">
+      <nav className="bg-white/80 backdrop-blur-md border-b border-slate-200/60 sticky top-0 z-40 shadow-lg shadow-slate-900/5">
+        <div className="max-w-7xl mx-auto px-6 py-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3 group cursor-pointer">
               <div className="relative">
@@ -315,90 +322,150 @@ const TestComponent = () => {
           </div>
         </div>
       </nav>
-      <div className="max-w-4xl mx-auto px-4">
+      
+      <div className="max-w-4xl mx-auto px-4 relative z-10">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-4">
-          <h1 className="text-3xl font-bold text-gray-800 text-center mb-4">Aptitude Test</h1>
+        <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-lg shadow-slate-900/10 border border-white/40 p-8 mb-4 mt-4">
+          <div className="text-center mb-6">
+            {/* <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-600 rounded-2xl mb-4 shadow-lg">
+              <span className="text-2xl font-bold text-white">?</span>
+            </div> */}
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 bg-clip-text text-transparent mb-2">
+              Aptitude Test
+            </h1>
+            <p className="text-slate-600">Discover your potential with our comprehensive assessment</p>
+          </div>
           
-          {/* Progress Bar */}
-          <div className="mb-4">
-            <div className="flex justify-between text-sm text-gray-600 mb-2">
-              <span>Progress</span>
-              <span>{Math.round(getProgressPercentage())}% Complete</span>
+          {/* Enhanced Progress Bar */}
+          <div className="mb-6">
+            <div className="flex justify-between text-sm font-medium text-slate-700 mb-3">
+              <span className="flex items-center">
+                <div className="w-2 h-2 bg-blue-500 rounded-full mr-2 animate-pulse"></div>
+                Progress
+              </span>
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-bold">
+                {Math.round(getProgressPercentage())}% Complete
+              </span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="relative w-full bg-slate-200/80 rounded-full h-3 overflow-hidden shadow-inner">
               <div 
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 rounded-full transition-all duration-500 ease-out relative"
+                style={{ width: `${getProgressPercentage()}%` }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+              </div>
+              <div 
+                className="absolute top-0 h-full bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 rounded-full blur-sm opacity-40 transition-all duration-500"
                 style={{ width: `${getProgressPercentage()}%` }}
               ></div>
             </div>
           </div>
 
           {/* Question Counter */}
-          <div className="text-center text-gray-600">
-            Question {currentQuestionIndex + 1} of {questions.length}
+          <div className="text-center">
+            <div className="inline-flex items-center bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200/50 rounded-full px-4 py-2 shadow-sm">
+              <span className="text-slate-700 font-medium">
+                Question <span className="font-bold text-blue-600">{currentQuestionIndex + 1}</span> of <span className="font-bold text-purple-600">{questions.length}</span>
+              </span>
+            </div>
           </div>
         </div>
 
         {/* Question Card */}
-        <div className="bg-white rounded-lg shadow-sm p-8 mb-6">
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-6">
-              {currentQuestionIndex + 1}. {currentQuestion.question_text}
-            </h2>
+        <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-lg shadow-slate-900/10 border border-white/40 p-8 mb-4">
+          <div className="mb-8">
+            <div className="flex items-start space-x-3 mb-6">
+              <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm">
+                <span className="text-sm font-bold text-white">{currentQuestionIndex + 1}</span>
+              </div>
+              <h2 className="text-xl font-semibold text-slate-800 leading-relaxed">
+                {currentQuestion.question_text}
+              </h2>
+            </div>
             
             {currentQuestion.type === 'multiple' && (
-              <p className="text-sm text-blue-600 mb-4">
-                <i>Select all that apply</i>
-              </p>
+              <div className="inline-flex items-center bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 mb-6">
+                <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
+                <p className="text-sm font-medium text-blue-700">
+                  Select all that apply
+                </p>
+              </div>
             )}
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             {currentQuestion.options.map((option, idx) => (
               <div 
                 key={idx}
-                className={`p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                className={`group relative p-5 border-2 rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-[1.02] hover:shadow-md ${
                   currentAnswers.includes(idx)
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-blue-500 bg-gradient-to-r from-blue-50 to-purple-50 shadow-lg shadow-blue-500/20'
+                    : 'border-slate-200 bg-white/60 hover:border-slate-300 hover:bg-white/80'
                 }`}
                 onClick={() => handleAnswerChange(currentQuestion.id, idx, currentQuestion.type === 'multiple')}
               >
                 <label className="flex items-center cursor-pointer">
-                  <input
-                    type={currentQuestion.type === 'multiple' ? 'checkbox' : 'radio'}
-                    name={`question-${currentQuestion.id}`}
-                    checked={currentAnswers.includes(idx)}
-                    onChange={() => handleAnswerChange(currentQuestion.id, idx, currentQuestion.type === 'multiple')}
-                    className="mr-3"
-                  />
-                  <span className="text-gray-700">{option}</span>
+                  <div className="relative mr-4">
+                    <input
+                      type={currentQuestion.type === 'multiple' ? 'checkbox' : 'radio'}
+                      name={`question-${currentQuestion.id}`}
+                      checked={currentAnswers.includes(idx)}
+                      onChange={() => handleAnswerChange(currentQuestion.id, idx, currentQuestion.type === 'multiple')}
+                      className="sr-only"
+                    />
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+                      currentAnswers.includes(idx)
+                        ? 'border-blue-500 bg-blue-500'
+                        : 'border-slate-300 bg-white'
+                    }`}>
+                      {currentAnswers.includes(idx) && (
+                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                      )}
+                    </div>
+                  </div>
+                  <span className={`text-slate-700 font-medium leading-relaxed transition-colors duration-200 ${
+                    currentAnswers.includes(idx) ? 'text-slate-800' : 'group-hover:text-slate-800'
+                  }`}>
+                    {option}
+                  </span>
                 </label>
+                
+                {/* Selection indicator */}
+                {currentAnswers.includes(idx) && (
+                  <div className="absolute top-3 right-3">
+                    <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-sm">
+                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
 
           {/* Validation Error */}
           {showValidationError && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-700 text-sm">
-                <AlertCircle className="inline h-4 w-4 mr-1" />
-                Please select at least one option before proceeding.
-              </p>
+            <div className="mt-6 p-4 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl shadow-sm">
+              <div className="flex items-center">
+                <AlertCircle className="h-5 w-5 text-red-500 mr-3" />
+                <p className="text-red-700 font-medium">
+                  Please select at least one option before proceeding.
+                </p>
+              </div>
             </div>
           )}
         </div>
 
         {/* Navigation Buttons */}
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center mb-422">
           <button
             onClick={handlePrevious}
             disabled={currentQuestionIndex === 0}
-            className={`flex items-center px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+            className={`flex items-center px-8 py-4 rounded-xl font-semibold transition-all duration-300 transform ${
               currentQuestionIndex === 0
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                : 'bg-white/80 backdrop-blur-sm text-slate-700 hover:bg-white border border-slate-200 hover:shadow-lg hover:scale-105 shadow-sm'
             }`}
           >
             <ChevronLeft className="h-5 w-5 mr-2" />
@@ -409,7 +476,7 @@ const TestComponent = () => {
             {currentQuestionIndex < questions.length - 1 ? (
               <button
                 onClick={handleNext}
-                className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-all duration-200"
+                className="flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-700 text-white rounded-xl font-semibold hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
               >
                 Next
                 <ChevronRight className="h-5 w-5 ml-2" />
@@ -418,8 +485,10 @@ const TestComponent = () => {
               <button
                 onClick={handleSubmit}
                 disabled={submitting}
-                className={`flex items-center px-8 py-3 rounded-lg font-medium transition-all duration-200 ${
-                    submitting ? 'bg-green-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 text-white'
+                className={`flex items-center px-10 py-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg ${
+                    submitting 
+                      ? 'bg-gradient-to-r from-green-400 to-emerald-500 cursor-not-allowed text-white' 
+                      : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white hover:shadow-xl'
                   }`}
               >
                 <CheckCircle className="h-5 w-5 mr-2" />
@@ -429,24 +498,52 @@ const TestComponent = () => {
           </div>
         </div>
 
-        {/* Question Navigation Dots */}
-        <div className="flex justify-center mt-8 space-x-2">
-          {questions.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentQuestionIndex(index)}
-              className={`w-3 h-3 rounded-full transition-all duration-200 ${
-                index === currentQuestionIndex
-                  ? 'bg-blue-600'
-                  : answers[questions[index].id] && answers[questions[index].id].length > 0
-                  ? 'bg-green-500'
-                  : 'bg-gray-300'
-              }`}
-              title={`Question ${index + 1}${answers[questions[index].id] && answers[questions[index].id].length > 0 ? ' (Answered)' : ''}`}
-            />
-          ))}
+        {/* Enhanced Question Navigation Dots */}
+        <div className="flex justify-center mb-8">
+          <div className="bg-white/60 backdrop-blur-sm rounded-full p-3 shadow-lg border border-white/40">
+            <div className="flex space-x-3">
+              {questions.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentQuestionIndex(index)}
+                  className={`relative w-4 h-4 rounded-full transition-all duration-300 transform hover:scale-125 ${
+                    index === currentQuestionIndex
+                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg'
+                      : answers[questions[index].id] && answers[questions[index].id].length > 0
+                      ? 'bg-gradient-to-r from-green-500 to-emerald-500 shadow-md'
+                      : 'bg-slate-300 hover:bg-slate-400'
+                  }`}
+                  title={`Question ${index + 1}${answers[questions[index].id] && answers[questions[index].id].length > 0 ? ' (Answered)' : ''}`}
+                >
+                  {index === currentQuestionIndex && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full animate-ping opacity-75"></div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
+
+      <style jsx>{`
+        .animation-delay-1000 {
+          animation-delay: 1s;
+        }
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+        @keyframes shimmer {
+          0% {
+            transform: translateX(-100%);
+          }
+          100% {
+            transform: translateX(100%);
+          }
+        }
+        .animate-shimmer {
+          animation: shimmer 2s infinite;
+        }
+      `}</style>
     </div>
   );
 };
