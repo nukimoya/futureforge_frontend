@@ -1,5 +1,7 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 import { Sparkles, Star, Settings, Bell, TrendingUp, LogOut, BookOpen, Target, ChevronRight, RefreshCw, User, Calendar, Clock } from 'lucide-react';
 import { AuthContext } from "../../context/authContext";
 import { useAxios } from '../../config/api';
@@ -12,14 +14,14 @@ const RecommendationsPage = () => {
   const [error, setError] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const navigate = useNavigate();
-  const { 
-    // user,
-     dispatch } = useContext(AuthContext);
-  
-  const username = "Alex Johnson";
-  const email = "alex.johnson@email.com";
-  const role = "Professional";
+  const { user, dispatch } = useContext(AuthContext);
   const api = useAxios()
+  const reportRef = useRef();
+
+  const username = user?.data?.user?.username;
+  const email = user?.data?.user?.email;
+  const role = user?.data?.user?.role;
+
 
 
   const handleLogout = () => {
@@ -85,6 +87,43 @@ const RecommendationsPage = () => {
   
     fetchRecommendations();
   }, [api]);
+
+  const handleDownloadReport = async () => {
+    const element = reportRef.current;
+  
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true
+    });
+  
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = pdf.internal.pageSize.getWidth();
+  
+    // 📝 Add text content first (static user info)
+    pdf.setFontSize(12);
+    pdf.text(`Name: ${username}`, 20, 15);
+    pdf.text(`Email: ${email}`, 20, 23);
+    pdf.text(`Generated At: ${new Date().toLocaleString()}`, 20, 31);
+  
+    // 🖼️ Then add the image *lower* on the page to avoid overlap
+    const imgProps = pdf.getImageProperties(imgData);
+    const imgHeight = (imgProps.height * pageWidth) / imgProps.width;
+  
+    const yOffset = 35; // Space from top to leave room for text
+    pdf.addImage(imgData, 'PNG', 0, yOffset, pageWidth, imgHeight);
+  
+    // Save the PDF
+    pdf.save(`FutureForge_${username}_Report.pdf`);
+
+    // Tell backend that a report was downloaded
+    try {
+      await api.post('/api/reportDownload');
+    } catch (err) {
+      console.warn('Failed to log report download activity', err);
+    }
+  };
+  
   
 
   const getIconComponent = (iconType) => {
@@ -233,17 +272,17 @@ const RecommendationsPage = () => {
       </nav>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto md:px-10 px-6 py-8">
+      <div ref={reportRef} className="max-w-7xl mx-auto md:px-10 px-6 py-8">
         {/* Enhanced Header */}
         <div className="bg-white/70 backdrop-blur-sm border border-slate-200/60 rounded-2xl shadow-sm p-8 mb-10">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-4">
-              {/* <div className="w-12 h-12 bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 via-purple-500 to-blue-400 rounded-xl flex items-center justify-center shadow-lg">
                 <Sparkles className="w-6 h-6 text-white" />
-              </div> */}
+              </div>
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-                  AI Recommendations
+                <h1 className="text-3xl font-bold bg-clip-text">
+                  Career Recommendations
                 </h1>
                 <p className="text-slate-600 mt-1">Personalized insights for your growth journey</p>
               </div>
@@ -394,7 +433,7 @@ const RecommendationsPage = () => {
               These recommendations are tailored specifically for you. Start with high-priority items and gradually work through your personalized development plan.
             </p>
             <div className="flex justify-center space-x-4">
-              <button className="px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500  text-white rounded-xl font-medium hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 hover:scale-105">
+              <button onClick={handleDownloadReport} className="px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500  text-white rounded-xl font-medium hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 hover:scale-105">
                 Download Report
               </button>
               <button className="px-6 py-3 bg-white/80 backdrop-blur-sm border border-slate-200 text-slate-700 rounded-xl font-medium hover:bg-white/90 transition-all duration-300">
@@ -415,112 +454,124 @@ const RecommendationCard = ({ recommendation, getIconComponent, getPriorityColor
   const [expanded, setExpanded] = useState(false);
   
   return (
-    <div className="group bg-white/80 backdrop-blur-lg rounded-2xl border border-white/40 overflow-hidden hover:shadow-xl hover:shadow-slate-900/10 transition-all duration-500 transform hover:scale-[1.02] relative">
-      {/* Gradient overlay on hover */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-purple-50/30 to-indigo-50/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+    <div className="group bg-white/90 backdrop-blur-xl rounded-3xl border border-white/50 overflow-hidden hover:shadow-2xl hover:shadow-slate-900/20 transition-all duration-700 transform hover:scale-[1.03] relative min-h-[480px] flex flex-col">
+      {/* Dynamic gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/60 via-purple-50/40 to-indigo-50/50 opacity-0 group-hover:opacity-100 transition-all duration-700 pointer-events-none"></div>
       
-      <div className="p-8 relative z-10">
-        {/* Header */}
+      {/* Ambient glow effect */}
+      <div className="absolute -inset-2 bg-gradient-to-r from-blue-400/10 via-purple-400/10 to-indigo-400/10 rounded-3xl blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 -z-10"></div>
+      
+      <div className="p-8 relative z-10 flex flex-col flex-1">
+        {/* Header Section */}
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-center flex-1">
             <div className="relative">
-              <div className="p-3 bg-gradient-to-br from-blue-100 via-purple-50 to-indigo-100 rounded-2xl mr-4 shadow-sm group-hover:shadow-md transition-all duration-300 group-hover:scale-110">
-                <div className="text-blue-600 group-hover:text-purple-600 transition-colors duration-300">
+              <div className="p-4 bg-gradient-to-br from-blue-100/80 via-purple-50/80 to-indigo-100/80 rounded-3xl mr-5 shadow-lg group-hover:shadow-xl transition-all duration-500 group-hover:scale-110 border border-white/30">
+                <div className="text-blue-600 group-hover:text-purple-600 transition-colors duration-500 transform group-hover:rotate-6">
                   {getIconComponent(recommendation.icon)}
                 </div>
               </div>
-              {/* Icon glow effect */}
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              {/* Enhanced icon glow */}
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-400/30 to-purple-500/30 rounded-3xl blur-2xl opacity-0 group-hover:opacity-80 transition-all duration-700"></div>
             </div>
             <div className="flex-1">
-              <h3 className="font-bold text-slate-800 text-xl mb-2 bg-gradient-to-r from-slate-800 to-slate-700 bg-clip-text group-hover:from-blue-700 group-hover:to-purple-700 transition-all duration-300">
+              <h3 className="font-bold text-slate-800 text-xl mb-3 group-hover:bg-gradient-to-r group-hover:from-blue-700 group-hover:to-purple-700 group-hover:bg-clip-text group-hover:text-transparent transition-all duration-500">
                 {recommendation.title}
               </h3>
               <div className="flex items-center space-x-3">
-                <span className={`px-3 py-1.5 rounded-full text-xs font-semibold capitalize backdrop-blur-sm border shadow-sm transition-all duration-200 ${getTypeColor(recommendation.type)}`}>
+                <span className={`px-4 py-2 rounded-full text-xs font-bold capitalize backdrop-blur-md border shadow-md transition-all duration-300 hover:scale-105 ${getTypeColor(recommendation.type)}`}>
                   {recommendation.type}
                 </span>
-                <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border capitalize backdrop-blur-sm shadow-sm transition-all duration-200 ${getPriorityColor(recommendation.priority)}`}>
+                <span className={`px-4 py-2 rounded-full text-xs font-bold border capitalize backdrop-blur-md shadow-md transition-all duration-300 hover:scale-105 ${getPriorityColor(recommendation.priority)}`}>
                   {recommendation.priority} Priority
                 </span>
               </div>
             </div>
           </div>
           
+          {/* Confidence Score */}
           <div className="text-right ml-4">
-            <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-3 border border-blue-100/50 shadow-sm group-hover:shadow-md transition-all duration-300">
-              <div className="flex items-center justify-center text-blue-600 mb-1">
-                <Star className="h-5 w-5 mr-2 fill-current" />
-                <span className="font-bold text-lg">{recommendation.confidence}%</span>
+            <div className="bg-gradient-to-br from-blue-50/90 to-purple-50/90 rounded-2xl p-4 border border-blue-200/60 shadow-lg group-hover:shadow-xl transition-all duration-500 backdrop-blur-md">
+              <div className="flex items-center justify-center text-blue-600 mb-2">
+                <Star className="h-5 w-5 mr-2 fill-current group-hover:text-purple-600 transition-colors duration-300" />
+                <span className="font-bold text-xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{recommendation.confidence}%</span>
               </div>
-              <span className="text-xs text-slate-600 font-medium">Confidence</span>
+              <span className="text-xs text-slate-600 font-semibold uppercase tracking-wide">Confidence</span>
             </div>
           </div>
         </div>
 
-        {/* Description */}
-        <div className="mb-6">
-          <p className="text-slate-700 leading-relaxed text-base font-medium">
-            {recommendation.description}
-          </p>
-        </div>
+        {/* Content Section - Flexible */}
+        <div className="flex-1 flex flex-col">
+          {/* Description */}
+          <div className="mb-6">
+            <p className="text-slate-700 leading-relaxed text-base font-medium line-clamp-3">
+              {recommendation.description}
+            </p>
+          </div>
 
-        {/* Timeframe */}
-        <div className="flex items-center mb-6">
-          <div className="inline-flex items-center bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200/50 rounded-full px-4 py-2 shadow-sm">
-            <Clock className="h-4 w-4 mr-2 text-slate-600" />
-            <span className="text-sm font-medium text-slate-700">{recommendation.timeframe}</span>
+          {/* Timeframe */}
+          <div className="flex items-center mb-6">
+            <div className="inline-flex items-center bg-gradient-to-r from-slate-50/90 to-blue-50/90 border border-slate-200/60 rounded-full px-5 py-3 shadow-lg backdrop-blur-md hover:shadow-xl transition-all duration-300">
+              <Clock className="h-5 w-5 mr-3 text-slate-600" />
+              <span className="text-sm font-semibold text-slate-700">{recommendation.timeframe}</span>
+            </div>
+          </div>
+
+          {/* Skills Tags */}
+          <div className="mb-8">
+            <div className="flex flex-wrap gap-3">
+              {recommendation.skills.slice(0, 3).map((skill, idx) => (
+                <span 
+                  key={idx} 
+                  className="px-4 py-2 bg-gradient-to-r from-blue-50/90 to-purple-50/90 text-slate-700 rounded-2xl text-sm font-semibold border border-blue-200/50 shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300 cursor-default backdrop-blur-sm"
+                >
+                  {skill}
+                </span>
+              ))}
+              {recommendation.skills.length > 3 && (
+                <span className="px-4 py-2 bg-gradient-to-r from-slate-100/90 to-slate-50/90 text-slate-600 rounded-2xl text-sm font-semibold border border-slate-300/50 shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300 cursor-default backdrop-blur-sm">
+                  +{recommendation.skills.length - 3} more
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Skills Tags */}
-        <div className="mb-6">
-          <div className="flex flex-wrap gap-2">
-            {recommendation.skills.slice(0, 3).map((skill, idx) => (
-              <span 
-                key={idx} 
-                className="px-3 py-2 bg-gradient-to-r from-blue-50 to-purple-50 text-slate-700 rounded-xl text-sm font-medium border border-blue-100/50 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200 cursor-default"
-              >
-                {skill}
-              </span>
-            ))}
-            {recommendation.skills.length > 3 && (
-              <span className="px-3 py-2 bg-gradient-to-r from-slate-100 to-slate-50 text-slate-600 rounded-xl text-sm font-medium border border-slate-200/50 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200 cursor-default">
-                +{recommendation.skills.length - 3} more
-              </span>
-            )}
-          </div>
+        {/* Fixed Action Button Section */}
+        <div className="mt-auto pt-4 border-t border-gradient-to-r from-slate-200/50 via-blue-100/50 to-purple-100/50">
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="group/btn w-full inline-flex items-center justify-center bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700 text-white font-bold text-sm px-8 py-4 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:scale-[1.02] relative overflow-hidden"
+          >
+            {/* Button shine effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000"></div>
+            
+            <span className="relative z-10">{expanded ? 'Hide Action Plan' : 'View Action Plan'}</span>
+            <ChevronRight className={`h-5 w-5 ml-3 transition-all duration-500 group-hover/btn:translate-x-1 relative z-10 ${expanded ? 'rotate-90' : ''}`} />
+          </button>
         </div>
-
-        {/* Expand/Collapse Button */}
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="group/btn inline-flex items-center bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700 text-white font-semibold text-sm px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-        >
-          {expanded ? 'Show Less' : 'View Action Plan'}
-          <ChevronRight className={`h-4 w-4 ml-2 transition-transform duration-300 group-hover/btn:translate-x-1 ${expanded ? 'rotate-90' : ''}`} />
-        </button>
 
         {/* Expanded Action Items */}
         {expanded && (
-          <div className="mt-8 pt-6 border-t border-gradient-to-r from-slate-200 via-blue-100 to-purple-100">
-            <div className="bg-gradient-to-br from-blue-50/50 to-purple-50/50 rounded-2xl p-6 border border-blue-100/30 shadow-inner">
-              <div className="flex items-center mb-4">
-                <div className="w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mr-3"></div>
+          <div className="mt-6 pt-6 border-t border-gradient-to-r from-slate-200/50 via-blue-100/50 to-purple-100/50 animate-in fade-in-0 slide-in-from-top-4 duration-500">
+            <div className="bg-gradient-to-br from-blue-50/80 to-purple-50/80 rounded-3xl p-6 border border-blue-200/40 shadow-inner backdrop-blur-sm">
+              <div className="flex items-center mb-6">
+                <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mr-4 animate-pulse"></div>
                 <h4 className="font-bold text-slate-800 text-lg bg-gradient-to-r from-blue-700 to-purple-700 bg-clip-text text-transparent">
                   Recommended Action Steps:
                 </h4>
               </div>
-              <ul className="space-y-4">
+              <ul className="space-y-5">
                 {recommendation.actionItems.map((item, idx) => (
-                  <li key={idx} className="flex items-start group/item">
+                  <li key={idx} className="flex items-start group/item animate-in fade-in-0 slide-in-from-left-4 duration-300" style={{animationDelay: `${idx * 100}ms`}}>
                     <div className="relative">
-                      <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-4 mt-0.5 shadow-sm group-hover/item:shadow-md transition-all duration-200">
-                        <span className="text-white text-xs font-bold">{idx + 1}</span>
+                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-4 mt-1 shadow-lg group-hover/item:shadow-xl transition-all duration-300 group-hover/item:scale-110">
+                        <span className="text-white text-sm font-bold">{idx + 1}</span>
                       </div>
-                      <div className="absolute inset-0 bg-gradient-to-br from-blue-400/30 to-purple-500/30 rounded-full blur-lg opacity-0 group-hover/item:opacity-100 transition-opacity duration-300"></div>
+                      <div className="absolute inset-0 bg-gradient-to-br from-blue-400/40 to-purple-500/40 rounded-full blur-xl opacity-0 group-hover/item:opacity-100 transition-opacity duration-500"></div>
                     </div>
-                    <div className="flex-1 bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-white/40 shadow-sm hover:shadow-md transition-all duration-200 group-hover/item:bg-white/80">
+                    <div className="flex-1 bg-white/80 backdrop-blur-md rounded-2xl p-5 border border-white/60 shadow-lg hover:shadow-xl transition-all duration-300 group-hover/item:bg-white/90 group-hover/item:scale-[1.02]">
                       <span className="text-slate-700 font-medium leading-relaxed">{item}</span>
                     </div>
                   </li>

@@ -95,7 +95,7 @@ const StartTestModal = ({ isOpen, onClose, onStartTest, testDuration }) => {
       </div>
 
       {/* Animations */}
-      <style jsx>{`
+      <style jsx='true'>{`
         .animate-fadeIn {
           animation: fadeIn 0.2s ease-out;
         }

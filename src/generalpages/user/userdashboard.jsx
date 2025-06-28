@@ -1,6 +1,6 @@
 import { useEffect, useState, useContext } from "react";
 import { useNavigate } from 'react-router-dom';
-import {  Briefcase,  Sparkles,  LogOut,  BarChart2,  User,  FileText,  TrendingUp, Calendar, Award, Target, ChevronRight, Download, MessageCircle, Bell, Settings } from "lucide-react";
+import {  Briefcase,  Sparkles,  LogOut,  BarChart2,  User, Clock,  FileText,  TrendingUp, Calendar, Target, ChevronRight, Download, MessageCircle, Bell, Settings } from "lucide-react";
 import { AuthContext } from "../../context/authContext";
 import StartTestModal from "../../components/startTestModal";
 
@@ -9,6 +9,10 @@ import { useAxios } from "../../config/api";
 const Dashboard = () => {
   const [careerRecommendations, setCareerRecommendations] = useState([]);
   const [testStatus, setTestStatus] = useState("Completed");
+  const [userStats, setUserStats] = useState({});
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [activities, setActivities] = useState([]);
+  const [loadingActivities, setLoadingActivities] = useState(false);
   const [error, setError] = useState('');
   const [userProfile, setUserProfile] = useState({})
   const [learningPaths, setLearningPaths] = useState([
@@ -25,6 +29,8 @@ const Dashboard = () => {
       totalModules: 12
     }
   ]);
+  const [showTestInstructions, setShowTestInstructions] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { user, dispatch } = useContext(AuthContext);
@@ -34,8 +40,6 @@ const Dashboard = () => {
   const email = user?.data?.user?.email;
   const role = user?.data?.user?.role;
 
-  const [showTestInstructions, setShowTestInstructions] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const handleLogout = () => {
     try {
@@ -69,14 +73,6 @@ const Dashboard = () => {
   const handleBeginTest = () => {
     setShowTestInstructions(false);
     navigate('/test');
-  };
-
-  // Mock data for demo purposes
-  const mockStats = {
-    completedAssessments: 3,
-    hoursLearned: 24,
-    skillsGained: 12,
-    careerMatches: 8
   };
 
   const mockActivities = [
@@ -139,6 +135,64 @@ const Dashboard = () => {
   
     fetchRecommendations();
   }, [api]);
+
+  useEffect(() => {
+    const fetchUserStats = async () => {
+      try {
+        setStatsLoading(true);
+  
+        const response = await api.get('/api/userStats');
+  
+        if (!response.data) {
+          throw new Error('No stats returned from server');
+        }
+  
+        setUserStats(response.data);
+      } catch (err) {
+        console.error('❌ Failed to fetch user stats:', err);
+        toast.error(`Failed to load user stats`, {
+          position: 'top-right',
+          autoClose: 5000,
+          pauseOnHover: true,
+          draggable: true,
+          theme: 'colored'
+        });
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+  
+    fetchUserStats();
+  }, [api]);
+
+  useEffect(() => {
+    const fetchActivities = async () => {
+      try {
+        setLoadingActivities(true);
+  
+        const response = await api.get('/api/user/activities');
+  
+        if (!response.data || !Array.isArray(response.data.activities)) {
+          throw new Error('Invalid response format');
+        }
+  
+        setActivities(response.data.activities);
+      } catch (error) {
+        console.error('❌ Failed to fetch user activities:', error);
+        toast.error('Failed to load recent activities', {
+          position: 'top-right',
+          autoClose: 4000,
+          pauseOnHover: true,
+          theme: 'colored'
+        });
+      } finally {
+        setLoadingActivities(false);
+      }
+    };
+  
+    fetchActivities();
+  }, [api]);
+  
   
 
 
@@ -283,7 +337,7 @@ const Dashboard = () => {
                 <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                   <BarChart2 className="w-6 h-6 text-blue-600" />
                 </div>
-                <span className="text-2xl font-bold text-slate-800">{mockStats.completedAssessments}</span>
+                <span className="text-2xl font-bold text-slate-800">{userStats.testsTaken}</span>
               </div>
               <p className="text-sm text-slate-600 font-medium">Assessments Completed</p>
             </div>
@@ -293,7 +347,7 @@ const Dashboard = () => {
                 <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
                   <Target className="w-6 h-6 text-amber-600" />
                 </div>
-                <span className="text-2xl font-bold text-slate-800">{mockStats.careerMatches}</span>
+                <span className="text-2xl font-bold text-slate-800">{userStats.distinctCareerCount}</span>
               </div>
               <p className="text-sm text-slate-600 font-medium">Career Matches</p>
             </div>
@@ -303,19 +357,19 @@ const Dashboard = () => {
                 <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
                   <FileText className="w-6 h-6 text-purple-600" />
                 </div>
-                <span className="text-2xl font-bold text-slate-800">{mockStats.hoursLearned}</span>
+                <span className="text-2xl font-bold text-slate-800">{userStats.averageScore}</span>
               </div>
-              <p className="text-sm text-slate-600 font-medium">Hours Learned</p>
+              <p className="text-sm text-slate-600 font-medium">Average Score</p>
             </div>
 
             <div className="bg-white/60 backdrop-blur-sm border border-slate-200/60 rounded-2xl p-6 hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300">
               <div className="flex items-center justify-between mb-3">
                 <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-                  <Award className="w-6 h-6 text-emerald-600" />
+                  <Clock className="w-6 h-6 text-emerald-600" />
                 </div>
-                <span className="text-2xl font-bold text-slate-800">{mockStats.skillsGained}</span>
+                <span className="text-2xl font-bold text-slate-800">{userStats.timeSinceLastTest}</span>
               </div>
-              <p className="text-sm text-slate-600 font-medium">Skills Gained</p>
+              <p className="text-sm text-slate-600 font-medium">Last test</p>
             </div>
 
           </div>
@@ -450,14 +504,6 @@ const Dashboard = () => {
 
             {/* Learning Paths */}
             <div className="relative">
-              {/* Overlay */}
-              <div className="absolute inset-0 bg-white/10 backdrop-blur-sm z-20 flex items-center justify-center rounded-3xl">
-                <span className="text-xl font-semibold text-slate-700 bg-white/90 px-4 py-2 rounded-lg shadow-sm border border-slate-300">
-                  🚧 Coming Soon
-                </span>
-              </div>
-              
-
               {/* Original Content */}
               <div className="bg-white/70 backdrop-blur-sm border border-slate-200/60 rounded-3xl p-8 relative z-10">
                 <div className="flex items-center space-x-3 mb-6">
@@ -469,6 +515,7 @@ const Dashboard = () => {
                     <p className="text-slate-600">Curated courses to boost your career</p>
                   </div>
                 </div>
+                
 
                 {learningPaths.length === 0 ? (
                 <div className="text-center py-12">
@@ -479,6 +526,11 @@ const Dashboard = () => {
                 </div>
               ) : (
                 <div className="grid gap-4">
+                  <div className="absolute inset-0 bg-white/10 backdrop-blur-sm z-10 flex items-center justify-center rounded-3xl">
+                    <span className="text-xl font-semibold text-slate-700 bg-white/90 px-4 py-2 rounded-lg shadow-sm border border-slate-300">
+                      🚧 Coming Soon
+                    </span>
+                  </div>
                   {learningPaths.map((path, index) => (
                     <div key={index} className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/60 rounded-2xl p-6 hover:shadow-lg transition-all duration-300">
                       <div className="flex items-center justify-between mb-4">
@@ -545,7 +597,9 @@ const Dashboard = () => {
                   </span>
                 </div>
 
-                <button className="w-full bg-gradient-to-r from-slate-600 to-slate-800 hover:from-slate-700 hover:to-slate-900 text-white py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center space-x-2">
+                <button 
+                // onClick={handleDownloadReport}
+                 className="w-full bg-gradient-to-r from-slate-600 to-slate-800 hover:from-slate-700 hover:to-slate-900 text-white py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center space-x-2">
                   <Download className="w-4 h-4" />
                   <span>Download Report</span>
                 </button>

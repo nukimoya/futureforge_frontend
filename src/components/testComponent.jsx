@@ -9,8 +9,7 @@ import { AuthContext } from '../context/authContext';
 const TestComponent = () => {
   const api = useAxios();
   const navigate = useNavigate();
-  const { dispatch } = useContext(AuthContext);
-
+  const { user, dispatch } = useContext(AuthContext);
 
   const [questions, setQuestions] = useState([]);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -22,45 +21,50 @@ const TestComponent = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [sessionId, setSessionId] = useState(null);
+  const [sessionStarted, setSessionStarted] = useState(false);
   const currentQuestion = questions[currentQuestionIndex];
   const currentAnswers = answers[currentQuestion?.id] || [];
   
 
-  const username = "Alex Johnson";
-  const email = "alex.johnson@email.com";
-  const role = "Professional";
-
-  useEffect(() => {
-    const fetchQuestions = async () => {
-      try {
-        const sessionRes = await api.post('/api/start-session');
-        const sessionId = sessionRes.data.sessionId;
-        setSessionId(sessionId);
+  const username = user?.data?.user?.username;
+  const email = user?.data?.user?.email;
+  const role = user?.data?.user?.role;
   
+  const fetchQuestions = useCallback(async () => {
+    if (sessionStarted) return;
 
-        const response = await api.post('/api/test-questions');
-        if (!response.data || !Array.isArray(response.data.questions)) {
-          throw new Error('Invalid question format');
-        }
+    try {
+
+      setSessionStarted(true);
+      const sessionRes = await api.post('/api/start-session');
+      const sessionId = sessionRes.data.sessionId;
+      setSessionId(sessionId);
   
-        setQuestions(response.data.questions);
-      } catch (err) {
-        console.error('❌ Failed to start test or fetch questions:', err);
-        setError(err.response?.data?.message || err.message || 'Unknown error');
-        toast.error(`Failed to Fetch Questions`, {
-          position: 'top-right',
-          autoClose: 5000,
-          pauseOnHover: true,
-          draggable: true,
-          theme: 'colored'
-        });
-      } finally {
-        setLoading(false);
+      const response = await api.post('/api/test-questions');
+      if (!response.data || !Array.isArray(response.data.questions)) {
+        throw new Error('Invalid question format');
       }
-    };
   
+      setQuestions(response.data.questions);
+    } catch (err) {
+      setSessionStarted(false);
+      console.error('❌ Failed to start test or fetch questions:', err);
+      setError(err.response?.data?.message || err.message || 'Unknown error');
+      toast.error(`Failed to Fetch Questions`, {
+        position: 'top-right',
+        autoClose: 5000,
+        pauseOnHover: true,
+        draggable: true,
+        theme: 'colored'
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [api, sessionStarted]);
+  
+  useEffect(() => {
     fetchQuestions();
-  }, [api]);
+  }, [fetchQuestions, api]);
 
   useEffect(() => {
     if (error) {
@@ -83,7 +87,7 @@ const TestComponent = () => {
     setShowValidationError(false);
   }, []);
 
-  const isCurrentQuestionAnswered =useCallback( () => {
+  const isCurrentQuestionAnswered = useCallback( () => {
     const currentQuestion = questions[currentQuestionIndex];
     const currentAnswers = answers[currentQuestion?.id];
     return currentAnswers && currentAnswers.length > 0;
@@ -108,7 +112,8 @@ const TestComponent = () => {
     }
   };
 
-  const handleSubmit = useCallback( async () => {
+
+  const handleSubmit = useCallback(async () => {
     if (submitting) return;
     setSubmitting(true);
   
@@ -157,8 +162,8 @@ const TestComponent = () => {
     } finally {
       setSubmitting(false);
     }
-  }, [answers, api, isCurrentQuestionAnswered, questions, sessionId, submitting]);
-
+  }, [api, isCurrentQuestionAnswered, answers, questions, sessionId, submitting]); // Removed api and isCurrentQuestionAnswered
+  
   useEffect(() => {
     const handleKeyDown = (e) => {
       // Do nothing if modal or input field is focused
@@ -525,7 +530,7 @@ const TestComponent = () => {
         </div>
       </div>
 
-      <style jsx>{`
+      <style jsx='true'>{`
         .animation-delay-1000 {
           animation-delay: 1s;
         }

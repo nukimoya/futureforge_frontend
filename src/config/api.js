@@ -6,6 +6,8 @@ import { errorHandler } from '../errorhandler/errorhandler';
 export const useAxios = () => {
   const { user } = useAuthContext();
 
+  const token = user?.data?.token;
+
   const api = useMemo(() => {
     const instance = axios.create({
       baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000',
@@ -18,7 +20,6 @@ export const useAxios = () => {
     // Request Interceptor
     instance.interceptors.request.use(
       (config) => {
-        const token = user?.data?.token;
 
         // Skip token injection for auth routes
         if (['/auth/login', '/auth/signup', '/auth/confirm-code', '/auth/resend-code'].includes(config.url)) {
@@ -51,7 +52,7 @@ export const useAxios = () => {
     );
 
     return instance;
-  }, [user]);
+  }, [token]);
 
   return api;
 };
