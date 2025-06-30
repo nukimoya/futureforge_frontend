@@ -1,11 +1,12 @@
 import { useEffect, useState, useContext } from "react";
 import { useNavigate } from 'react-router-dom';
-import {  Briefcase,  Sparkles,  LogOut,  BarChart2,  User, Clock,  FileText,  TrendingUp, Calendar, Target, ChevronRight, Download, MessageCircle, Bell, Settings } from "lucide-react";
+import {  Activity, Eye, Briefcase,  Sparkles,  LogOut,  BarChart2,  User, Clock,  FileText,  TrendingUp, Calendar, Target, ChevronRight, Download, MessageCircle, Bell, Settings } from "lucide-react";
 import { AuthContext } from "../../context/authContext";
 import StartTestModal from "../../components/startTestModal";
 
 import { toast } from 'react-toastify';
 import { useAxios } from "../../config/api";
+import Footer from "../../components/footer";
 const Dashboard = () => {
   const [careerRecommendations, setCareerRecommendations] = useState([]);
   const [testStatus, setTestStatus] = useState("Completed");
@@ -75,11 +76,28 @@ const Dashboard = () => {
     navigate('/test');
   };
 
-  const mockActivities = [
-    { type: "assessment", title: "Completed Personality Assessment", time: "2 hours ago", icon: BarChart2 },
-    { type: "learning", title: "Finished Python Basics Module", time: "1 day ago", icon: FileText },
-    { type: "career", title: "New career match found", time: "3 days ago", icon: Target }
-  ];
+  const activityTypeConfig = {
+    test_started: {
+      icon: FileText,
+      title: 'Started a new assessment'
+    },
+    test_completed: {
+      icon: Sparkles,
+      title: 'Completed an assessment'
+    },
+    top_recommendation_changed: {
+      icon: Activity,
+      title: 'Top recommendation changed'
+    },
+    report_downloaded: {
+      icon: Download,
+      title: 'Downloaded profile report'
+    },
+    recommendation_viewed: {
+      icon: Eye,
+      title: 'Viewed career recommendations'
+    }
+  };
 
   useEffect(() => {
     // Simulate loading state
@@ -170,7 +188,7 @@ const Dashboard = () => {
       try {
         setLoadingActivities(true);
   
-        const response = await api.get('/api/user/activities');
+        const response = await api.get('/api/userActivities');
   
         if (!response.data || !Array.isArray(response.data.activities)) {
           throw new Error('Invalid response format');
@@ -188,13 +206,10 @@ const Dashboard = () => {
       } finally {
         setLoadingActivities(false);
       }
-    };
+  };
   
     fetchActivities();
   }, [api]);
-  
-  
-
 
   const getTestStatusInfo = (status) => {
     const statusMap = {
@@ -301,7 +316,7 @@ const Dashboard = () => {
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-6 py-8 md:px-10 lg:px-1">
         {/* Hero Section */}
         <div className="mb-10">
           <div className="flex items-center justify-between mb-6">
@@ -376,7 +391,100 @@ const Dashboard = () => {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Left Column */}
+          {/* Left Sidebar*/}
+          <div className="space-y-6">
+            {/* Profile Card */}
+            <div className="bg-white/70 backdrop-blur-sm border border-slate-200/60 md:mx-40 lg:mx-0 rounded-3xl p-6">
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="w-12 h-12 bg-gradient-to-r from-slate-600 to-slate-800 rounded-xl flex items-center justify-center">
+                  <User className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-slate-800">Your Profile</h3>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-center mb-6">
+                  <div className="w-20 h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+                    <span className="text-2xl font-bold text-white">
+                      {username.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="text-center mb-6">
+                  <h4 className="font-bold text-slate-800 text-lg">{username}</h4>
+                  <p className="text-slate-600">{email}</p>
+                  <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium mt-2">
+                    {role}
+                  </span>
+                </div>
+
+                <button 
+                // onClick={handleDownloadReport}
+                 className="w-full bg-gradient-to-r from-slate-600 to-slate-800 hover:from-slate-700 hover:to-slate-900 text-white py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center space-x-2">
+                  <Download className="w-4 h-4" />
+                  <span>Download Report</span>
+                </button>
+              </div>
+            </div>
+            <div className="flex flex-col md:flex-row md:space-x-6 lg:flex-col">
+              {/* Recent Activity */}
+              <div className="flex-1 bg-white/70 backdrop-blur-sm border border-slate-200/60 rounded-3xl p-6 mb-6 md:mb-0 lg:mb-6">
+                <h3 className="text-xl font-bold text-slate-800 mb-6">Recent Activity</h3>
+                {loadingActivities ? (
+                  <p className="text-slate-500 text-sm">Loading activities...</p>
+                ) : (
+                  activities.map((activity, index) => {
+                    const config = activityTypeConfig[activity.type] || {
+                      icon: Activity,
+                      title: activity.type.replace(/_/g, ' ')
+                    };
+                    const Icon = config.icon;
+
+                    return (
+                      <div
+                        key={index}
+                        className="flex items-start space-x-3 p-3 hover:bg-slate-50 rounded-xl transition-colors"
+                      >
+                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Icon className="w-4 h-4 text-blue-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-800 truncate">{config.title}</p>
+                          <p className="text-xs text-slate-500">{activity.timeAgo}</p>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Quick Actions */}
+              <div className="w-full md:w-1/3 lg:w-full bg-white/70 backdrop-blur-sm border border-slate-200/60 rounded-3xl p-6">
+                <h3 className="text-xl font-bold text-slate-800 mb-6">Quick Actions</h3>
+                <div className="space-y-3">
+                  <button className="w-full flex items-center space-x-3 p-3 hover:bg-slate-50 rounded-xl transition-colors text-left">
+                    <MessageCircle className="w-5 h-5 text-blue-600" />
+                    <span className="text-slate-700 font-medium">Ask CareerBot</span>
+                  </button>
+                  <button className="w-full flex items-center space-x-3 p-3 hover:bg-slate-50 rounded-xl transition-colors text-left">
+                    <Calendar className="w-5 h-5 text-purple-600" />
+                    <span className="text-slate-700 font-medium">Schedule Mentoring</span>
+                  </button>
+                  <button className="w-full flex items-center space-x-3 p-3 hover:bg-slate-50 rounded-xl transition-colors text-left">
+                    <TrendingUp className="w-5 h-5 text-emerald-600" />
+                    <span className="text-slate-700 font-medium">Skill Assessment</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+
+            
+          </div>
+          {/* Right Column */}
           <div className="lg:col-span-2 space-y-8">
             {/* Assessment Section */}
             <div className="bg-white/70 backdrop-blur-sm border border-slate-200/60 rounded-3xl p-8 hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-500">
@@ -565,89 +673,10 @@ const Dashboard = () => {
               )}
               </div>
             </div>
-          </div>
-
-          {/* Right Sidebar */}
-          <div className="space-y-6">
-            {/* Profile Card */}
-            <div className="bg-white/70 backdrop-blur-sm border border-slate-200/60 rounded-3xl p-6">
-              <div className="flex items-center space-x-3 mb-6">
-                <div className="w-12 h-12 bg-gradient-to-r from-slate-600 to-slate-800 rounded-xl flex items-center justify-center">
-                  <User className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-slate-800">Your Profile</h3>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-center mb-6">
-                  <div className="w-20 h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
-                    <span className="text-2xl font-bold text-white">
-                      {username.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="text-center mb-6">
-                  <h4 className="font-bold text-slate-800 text-lg">{username}</h4>
-                  <p className="text-slate-600">{email}</p>
-                  <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium mt-2">
-                    {role}
-                  </span>
-                </div>
-
-                <button 
-                // onClick={handleDownloadReport}
-                 className="w-full bg-gradient-to-r from-slate-600 to-slate-800 hover:from-slate-700 hover:to-slate-900 text-white py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center space-x-2">
-                  <Download className="w-4 h-4" />
-                  <span>Download Report</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Recent Activity */}
-            <div className="bg-white/70 backdrop-blur-sm border border-slate-200/60 rounded-3xl p-6">
-              <h3 className="text-xl font-bold text-slate-800 mb-6">Recent Activity</h3>
-              <div className="space-y-4">
-                {mockActivities.map((activity, index) => {
-                  const Icon = activity.icon;
-                  return (
-                    <div key={index} className="flex items-start space-x-3 p-3 hover:bg-slate-50 rounded-xl transition-colors">
-                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Icon className="w-4 h-4 text-blue-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-800 truncate">{activity.title}</p>
-                        <p className="text-xs text-slate-500">{activity.time}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="bg-white/70 backdrop-blur-sm border border-slate-200/60 rounded-3xl p-6">
-              <h3 className="text-xl font-bold text-slate-800 mb-6">Quick Actions</h3>
-              <div className="space-y-3">
-                <button className="w-full flex items-center space-x-3 p-3 hover:bg-slate-50 rounded-xl transition-colors text-left">
-                  <MessageCircle className="w-5 h-5 text-blue-600" />
-                  <span className="text-slate-700 font-medium">Ask CareerBot</span>
-                </button>
-                <button className="w-full flex items-center space-x-3 p-3 hover:bg-slate-50 rounded-xl transition-colors text-left">
-                  <Calendar className="w-5 h-5 text-purple-600" />
-                  <span className="text-slate-700 font-medium">Schedule Mentoring</span>
-                </button>
-                <button className="w-full flex items-center space-x-3 p-3 hover:bg-slate-50 rounded-xl transition-colors text-left">
-                  <TrendingUp className="w-5 h-5 text-emerald-600" />
-                  <span className="text-slate-700 font-medium">Skill Assessment</span>
-                </button>
-              </div>
-            </div>
-          </div>
+          </div>       
         </div>
       </div>
+      <Footer />
 
       <StartTestModal
           isOpen={showTestInstructions}

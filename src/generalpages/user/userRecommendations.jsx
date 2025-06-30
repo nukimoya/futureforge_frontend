@@ -88,6 +88,24 @@ const RecommendationsPage = () => {
     fetchRecommendations();
   }, [api]);
 
+  useEffect(() => {
+    const logPageView = async () => {
+      try {
+        await api.post('/api/puserActivities', {
+          type: 'recommendation_viewed',
+          metadata: {
+            number: recommendations.length // or hardcode a sample value if needed
+          }
+        });
+      } catch (err) {
+        console.error('Failed to log activity:', err);
+      }
+    };
+
+    logPageView();
+  }, [api, recommendations.length]);
+
+
   const handleDownloadReport = async () => {
     const element = reportRef.current;
   

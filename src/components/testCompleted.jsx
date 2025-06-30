@@ -167,7 +167,7 @@ function SubmissionScreen({ isSubmitted }) {
         </div>
       </div>
 
-      <style jsx>{`
+      <style jsx='true'>{`
         .animation-delay-200 {
           animation-delay: 0.2s;
         }
