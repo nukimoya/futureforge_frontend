@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useContext } from "react";
+import { useNavigate } from 'react-router-dom';
 import { LogIn, Eye, EyeOff, Check, X, CheckCircle, AlertCircle } from "lucide-react";
 import { useAxios } from "../config/api";
 import { AuthContext } from "../context/authContext";
@@ -31,6 +32,7 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState('login'); // 'login', 'verify', 'dashboard'
   const [verificationCode, setVerificationCode] = useState('');
   const [toast, setToast] = useState(null);
@@ -287,12 +289,12 @@ const Login = () => {
                     </button>
                   </p>
                   <p className="text-sm text-gray-600">
-                    <button
-                      onClick={() => setCurrentStep("login")}
-                      className="text-blue-600 hover:text-blue-700 font-medium"
-                    >
-                      Back to Login
-                    </button>
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    Back to Login
+                  </button>
                   </p>
                 </div>
               </div>

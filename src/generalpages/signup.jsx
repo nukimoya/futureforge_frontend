@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Eye, EyeOff, Check, X, CheckCircle } from "lucide-react";
 import { useAxios } from '../config/api'
 
@@ -31,6 +32,7 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState('signup'); // 'signup', 'verify', 'login'
   const [verificationCode, setVerificationCode] = useState('');
   const [toast, setToast] = useState(null);
@@ -294,7 +296,7 @@ const Signup = () => {
               <h2 className="text-2xl font-bold text-gray-800 mb-4">Account Verified!</h2>
               <p className="text-gray-600 mb-6">Your FutureForge account has been successfully created and verified.</p>
               <button 
-                onClick={() => window.location.href = '/login'}
+                onClick={() => navigate('/login')}
                 className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 font-semibold"
               >
                 Continue to Login
