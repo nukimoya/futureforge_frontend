@@ -10,7 +10,7 @@ export const useAxios = () => {
 
   const api = useMemo(() => {
     const instance = axios.create({
-      baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000',
+      baseURL: import.meta.env.VITE_API_BASE_URL || 'https://futureforge-back.vercel.app/',
       timeout: 5000,
       headers: {
         'Content-Type': 'application/json',
