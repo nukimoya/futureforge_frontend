@@ -88,8 +88,9 @@ const Login = () => {
     setErrors(prev => ({ ...prev, [name]: error }));
   };
 
-  const handleSubmit = useCallback(async () => {
+  const handleSubmit = useCallback(async (e) => {
     // ✅ Validate fields and collect errors
+    if (e) e.preventDefault();
     const newErrors = {};
     Object.keys(formData).forEach((key) => {
       const error = validateField(key, formData[key]);
@@ -490,7 +491,7 @@ const Login = () => {
               <p className="text-gray-600">Sign in to your FutureForge account</p>
             </div>
 
-            <div className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               {/* Email Field */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
@@ -579,7 +580,7 @@ const Login = () => {
 
               {/* Submit Button */}
               <button
-                onClick={handleSubmit}
+                type="submit"
                 disabled={!isFormValid || isSubmitting}
                 className={`group w-full py-4 px-6 rounded-xl font-semibold text-white transition-all duration-300 transform ${
                   isFormValid && !isSubmitting
@@ -599,7 +600,7 @@ const Login = () => {
                   </div>
                 )}
               </button>
-            </div>
+            </form>
 
             <div className="mt-6 text-center">
               <p className="text-gray-600 text-sm">
@@ -611,13 +612,13 @@ const Login = () => {
             </div>
 
             {/* Demo Account Info */}
-            <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
+            {/* <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
               <p className="text-sm text-blue-800 font-medium mb-2">Demo Accounts:</p>
               <div className="text-xs text-blue-700 space-y-1">
                 <p><strong>Regular:</strong> demo@futureforge.com / password123</p>
                 <p><strong>Unverified:</strong> unverified@futureforge.com / password123</p>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
