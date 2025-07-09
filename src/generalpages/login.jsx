@@ -5,23 +5,38 @@ import { useAxios } from "../config/api";
 import { AuthContext } from "../context/authContext";
 
 
-const Toast = ({ message, type, onClose }) => {
+const Toast = ({ message, type = 'info', onClose }) => {
   useEffect(() => {
+    // ✅ Automatically dismiss toast after 4 seconds
     const timer = setTimeout(onClose, 4000);
+
+    // ✅ Clean up timer on unmount or onClose change
     return () => clearTimeout(timer);
   }, [onClose]);
 
+  // ✅ Map toast type to Tailwind color classes
+  const toastStyles = {
+    success: 'bg-green-500 text-white',
+    error: 'bg-red-500 text-white',
+    info: 'bg-blue-500 text-white',
+  };
+
+  // ✅ Map toast type to icon components
+  const toastIcons = {
+    success: <CheckCircle className="w-5 h-5 mr-2" />,
+    error: <X className="w-5 h-5 mr-2" />,
+    info: <AlertCircle className="w-5 h-5 mr-2" />,
+  };
+
   return (
-    <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform ${
-      type === 'success' ? 'bg-green-500 text-white' : 
-      type === 'error' ? 'bg-red-500 text-white' : 
-      'bg-blue-500 text-white'
-    }`}>
+    <div
+      className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform ${toastStyles[type] || toastStyles.info}`}
+      role="alert" // ✅ Improves accessibility
+      aria-live="assertive"
+    >
       <div className="flex items-center">
-        {type === 'success' ? <CheckCircle className="w-5 h-5 mr-2" /> : 
-         type === 'error' ? <X className="w-5 h-5 mr-2" /> : 
-         <AlertCircle className="w-5 h-5 mr-2" />}
-        {message}
+        {toastIcons[type] || toastIcons.info}
+        <span>{message}</span>
       </div>
     </div>
   );
@@ -43,9 +58,9 @@ const Login = () => {
   const api = useAxios();
   const { dispatch } = useContext(AuthContext);
 
-  const showToast = (message, type = 'success') => {
+  const showToast = useCallback((message, type = 'success') => {
     setToast({ message, type });
-  };
+  }, [setToast]);
 
   const validateField = useCallback((name, value) => {
     switch (name) {
@@ -74,112 +89,129 @@ const Login = () => {
   };
 
   const handleSubmit = useCallback(async () => {
+    // ✅ Validate fields and collect errors
     const newErrors = {};
-    Object.keys(formData).forEach(key => {
+    Object.keys(formData).forEach((key) => {
       const error = validateField(key, formData[key]);
       if (error) newErrors[key] = error;
     });
   
     setErrors(newErrors);
   
-    if (Object.keys(newErrors).length === 0) {
-      setIsSubmitting(true);
-  
-      try {
-        console.log("🔐 Attempting login with:", formData);
-        const response = await api.post('/auth/login', {
-          email: formData.email,
-          password: formData.password,
-        });
-  
-        console.log("✅ Login response:", response.data);
-  
-        // Validate response data structure before using it
-        if (!response.data || typeof response.data !== 'object') {
-          throw new Error('Invalid response format from server');
-        }
-  
-        // Store user data safely
-        try {
-          localStorage.setItem("user", JSON.stringify(response.data));
-          dispatch({ type: "LOGIN", payload: response.data });
-        } catch (storageError) {
-          console.error("❌ Storage error:", storageError);
-          throw new Error('Failed to save user data');
-        }
-  
-        // Handle different response scenarios
-        if (response.data.requiresVerification) {
-          showToast("Account verification required. Please check your email.", "info");
-          // Use a ref to track if component is still mounted
-          const timeoutId = setTimeout(() => {
-            setCurrentStep('verify');
-          }, 1000);
-          
-          // Store timeout ID for cleanup if needed
-          return () => clearTimeout(timeoutId);
-        } else {
-          showToast("Login successful! Welcome back.", "success");
-          const timeoutId = setTimeout(() => {
-            setCurrentStep('dashboard');
-          }, 1000);
-          
-          return () => clearTimeout(timeoutId);
-        }
-  
-      } catch (error) {
-        console.error("❌ Login error:", error);
-        
-        // Handle different types of errors
-        let errorMessage = "Login failed. Please try again.";
-        
-        if (error.response) {
-          // Server responded with error status
-          if (error.response.status === 401) {
-            errorMessage = "Invalid email or password.";
-          } else if (error.response.status === 429) {
-            errorMessage = "Too many login attempts. Please try again later.";
-          } else if (error.response.status >= 500) {
-            errorMessage = "Server error. Please try again later.";
-          } else if (error.response.data?.message) {
-            errorMessage = error.response.data.message;
-          }
-        } else if (error.request) {
-          // Request was made but no response received
-          errorMessage = "Network error. Please check your connection.";
-        } else if (error.message) {
-          // Custom error message
-          errorMessage = error.message;
-        }
-        
-        showToast(errorMessage, "error");
-        
-        // Clear any stored data on error
-        try {
-          localStorage.removeItem("user");
-        } catch (e) {
-          console.error("Failed to clear storage:", e);
-        }
-        
-      } finally {
-        setIsSubmitting(false);
-      }
-    }
-  }, [formData, validateField, api, dispatch, showToast, setCurrentStep, setErrors, setIsSubmitting]);
-  
-
-  const handleVerification = async () => {
-    if (verificationCode.length !== 6) {
-      showToast("Please enter a valid 6-digit verification code.", "error");
-      return;
-    }
+    // ✅ Exit early if validation failed
+    if (Object.keys(newErrors).length > 0) return;
   
     setIsSubmitting(true);
   
     try {
-      const payload = {
+      console.log("🔐 Attempting login with:", formData);
+  
+      const response = await api.post('/auth/login', {
         email: formData.email,
-        code: verificationCode
+        password: formData.password,
+      });
+  
+      console.log("✅ Login response:", response.data);
+  
+      // ✅ Check for valid response
+      if (!response.data || typeof response.data !== 'object') {
+        throw new Error('Invalid response format from server');
+      }
+  
+      const userData = response.data;
+  
+      // ✅ Persist user data locally
+      try {
+        localStorage.setItem("user", JSON.stringify(userData));
+        dispatch({ type: "LOGIN", payload: userData });
+      } catch (storageError) {
+        console.error("❌ Storage error:", storageError);
+        throw new Error('Failed to save user data');
+      }
+  
+      // ✅ Handle verification-required case
+      if (userData.requiresVerification) {
+        showToast("Account verification required. Please check your email.", "info");
+  
+        // Delay state change for smoother UX
+        const verifyTimeout = setTimeout(() => {
+          setCurrentStep('verify');
+        }, 1000);
+  
+        // ❌ Original return of cleanup function was misplaced and unreachable
+        // ✅ No return needed here — this isn't a useEffect
+  
+      } else {
+        // ✅ Successful login path
+        showToast("Login successful! Welcome back.", "success");
+  
+        setTimeout(() => {
+          setCurrentStep('dashboard');
+        }, 1000);
+      }
+  
+    } catch (error) {
+      console.error("❌ Login error:", error);
+  
+      // ✅ General error message fallback
+      let errorMessage = "Login failed. Please try again.";
+  
+      // ✅ Specific error parsing
+      if (error.response) {
+        const { status, data } = error.response;
+        if (status === 401) {
+          errorMessage = "Invalid email or password.";
+        } else if (status === 429) {
+          errorMessage = "Too many login attempts. Please try again later.";
+        } else if (status >= 500) {
+          errorMessage = "Server error. Please try again later.";
+        } else if (data?.message) {
+          errorMessage = data.message;
+        }
+      } else if (error.request) {
+        errorMessage = "Network error. Please check your connection.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+  
+      showToast(errorMessage, "error");
+  
+      // ✅ Clear local storage if something went wrong during login
+      try {
+        localStorage.removeItem("user");
+      } catch (e) {
+        console.error("Failed to clear user from storage:", e);
+      }
+  
+    } finally {
+      setIsSubmitting(false); // ✅ Always turn off the spinner
+    }
+  }, [
+    formData,
+    validateField,
+    api,
+    dispatch,
+    showToast,
+    setCurrentStep,
+    setErrors,
+    setIsSubmitting,
+  ]);
+  
+  
+
+  const handleVerification = async () => {
+    // ✅ Basic length validation
+    if (verificationCode.trim().length !== 6) {
+      showToast("Please enter a valid 6-digit verification code.", "error");
+      return;
+    }
+  
+    setIsSubmitting(true); // ✅ UI feedback
+  
+    try {
+      const payload = {
+        email: formData.email, // ✅ Pulls email from current state
+        code: verificationCode.trim(), // ✅ Trim in case user pastes with spaces
       };
   
       console.log("📤 Sending verification payload:", payload);
@@ -188,55 +220,93 @@ const Login = () => {
   
       console.log("✅ Verification success:", response.data);
   
-      // ✅ Store new token and update auth context
-      localStorage.setItem("user", JSON.stringify(response.data));
+      // ✅ Store fresh token in localStorage
+      try {
+        localStorage.setItem("user", JSON.stringify(response.data));
+      } catch (storageError) {
+        console.error("❌ Failed to save user data:", storageError);
+        showToast("Unable to save login session. Try again.", "error");
+        return; // Exit early on storage issue
+      }
+  
+      // ✅ Update global auth context
       dispatch({ type: "LOGIN", payload: response.data });
   
       showToast("Email verified successfully! Redirecting to dashboard...", "success");
+  
+      // ✅ Redirect user to dashboard after slight delay
       setTimeout(() => setCurrentStep('dashboard'), 1000);
+  
     } catch (error) {
       console.error("❌ Verification error:", error);
+  
+      // ✅ User-friendly error messages
       if (error.response?.data?.message) {
         showToast(error.response.data.message, "error");
       } else {
         showToast("Verification failed. Please try again.", "error");
       }
+  
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false); // ✅ Re-enable UI actions
     }
   };
+  
   
 
   
   useEffect(() => {
+    // ✅ Skip if code hasn't been sent
     if (!codeSent) return;
   
+    // ✅ Start countdown timer when code is sent
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
-          clearInterval(timer);
-          setCodeSent(false); // Allow "Send Code" to appear again
+          clearInterval(timer);      // ✅ Stop countdown at 0
+          setCodeSent(false);        // ✅ Allow "Send Code" to reappear
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
   
+    // ✅ Cleanup on unmount or re-render
     return () => clearInterval(timer);
   }, [codeSent]);
+  
 
   const handleSendCode = async () => {
+    // ✅ Prevent empty email from triggering API
+    if (!formData.email) {
+      showToast("Email is required before sending a code.", "error");
+      return;
+    }
+  
     try {
       showToast("Sending code...", "info");
+  
+      // ✅ API call to resend verification code
       await api.post('/auth/resend-code', { email: formData.email });
+  
       showToast("Verification code sent!", "success");
+  
+      // ✅ Reset countdown and UI state
       setCodeSent(true);
-      setCountdown(60); // reset to 10 minutes
+      setCountdown(60); // ⏱️ Adjusted to 60s (or 600 if you want 10 min)
+  
     } catch (error) {
       console.error("❌ Resend code error:", error);
-      showToast("Failed to send code. Try again.", "error");
+  
+      // ✅ Show specific error if server provided one
+      if (error.response?.data?.message) {
+        showToast(error.response.data.message, "error");
+      } else {
+        showToast("Failed to send code. Please try again.", "error");
+      }
     }
   };
+  
 
   const handleForgotPassword = () => {
     showToast("Password reset link sent to your email!", "info");
