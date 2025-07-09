@@ -94,30 +94,78 @@ const Login = () => {
   
         console.log("✅ Login response:", response.data);
   
-        // ✅ FIXED HERE
-        localStorage.setItem("user", JSON.stringify(response.data));
-        dispatch({ type: "LOGIN", payload: response.data });
+        // Validate response data structure before using it
+        if (!response.data || typeof response.data !== 'object') {
+          throw new Error('Invalid response format from server');
+        }
   
+        // Store user data safely
+        try {
+          localStorage.setItem("user", JSON.stringify(response.data));
+          dispatch({ type: "LOGIN", payload: response.data });
+        } catch (storageError) {
+          console.error("❌ Storage error:", storageError);
+          throw new Error('Failed to save user data');
+        }
+  
+        // Handle different response scenarios
         if (response.data.requiresVerification) {
           showToast("Account verification required. Please check your email.", "info");
-          setTimeout(() => setCurrentStep('verify'), 1000);
+          // Use a ref to track if component is still mounted
+          const timeoutId = setTimeout(() => {
+            setCurrentStep('verify');
+          }, 1000);
+          
+          // Store timeout ID for cleanup if needed
+          return () => clearTimeout(timeoutId);
         } else {
           showToast("Login successful! Welcome back.", "success");
-          setTimeout(() => setCurrentStep('dashboard'), 1000);
+          const timeoutId = setTimeout(() => {
+            setCurrentStep('dashboard');
+          }, 1000);
+          
+          return () => clearTimeout(timeoutId);
         }
   
       } catch (error) {
         console.error("❌ Login error:", error);
-        if (error.response?.data?.message) {
-          showToast(error.response.data.message, "error");
-        } else {
-          showToast("Login failed. Please try again.", "error");
+        
+        // Handle different types of errors
+        let errorMessage = "Login failed. Please try again.";
+        
+        if (error.response) {
+          // Server responded with error status
+          if (error.response.status === 401) {
+            errorMessage = "Invalid email or password.";
+          } else if (error.response.status === 429) {
+            errorMessage = "Too many login attempts. Please try again later.";
+          } else if (error.response.status >= 500) {
+            errorMessage = "Server error. Please try again later.";
+          } else if (error.response.data?.message) {
+            errorMessage = error.response.data.message;
+          }
+        } else if (error.request) {
+          // Request was made but no response received
+          errorMessage = "Network error. Please check your connection.";
+        } else if (error.message) {
+          // Custom error message
+          errorMessage = error.message;
         }
+        
+        showToast(errorMessage, "error");
+        
+        // Clear any stored data on error
+        try {
+          localStorage.removeItem("user");
+        } catch (e) {
+          console.error("Failed to clear storage:", e);
+        }
+        
       } finally {
         setIsSubmitting(false);
       }
     }
-  }, [formData, validateField, api, dispatch]);
+  }, [formData, validateField, api, dispatch, showToast, setCurrentStep, setErrors, setIsSubmitting]);
   
 
   const handleVerification = async () => {
