@@ -12,6 +12,7 @@ export const useAxios = () => {
     const instance = axios.create({
       baseURL: import.meta.env.VITE_API_BASE_URL || 'https://futureforge-back.vercel.app/',
       timeout: 5000,
+      withCredentials: true, 
       headers: {
         'Content-Type': 'application/json',
       },
