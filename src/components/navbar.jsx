@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Menu, X, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -36,6 +37,7 @@ const GlowingButton = ({ children, variant = 'primary', className = '', to, ...p
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -154,14 +156,14 @@ const Navbar = () => {
                 <GlowingButton 
                   variant="secondary" 
                   className="w-full justify-center"
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={() => {setIsMenuOpen(false); navigate('/login');}}
                 >
                   Sign In
                 </GlowingButton>
                 <GlowingButton 
                   variant="primary" 
                   className="w-full justify-center"
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={() => {setIsMenuOpen(false); navigate('/login');}}
                 >
                   Get Started
                 </GlowingButton>
