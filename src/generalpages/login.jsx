@@ -125,21 +125,25 @@ const Login = () => {
       showToast("Please enter a valid 6-digit verification code.", "error");
       return;
     }
-
+  
     setIsSubmitting(true);
-
+  
     try {
       const payload = {
         email: formData.email,
         code: verificationCode
       };
-
+  
       console.log("📤 Sending verification payload:", payload);
-
+  
       const response = await api.post('/auth/confirm-code', payload);
-
+  
       console.log("✅ Verification success:", response.data);
-
+  
+      // ✅ Store new token and update auth context
+      localStorage.setItem("user", JSON.stringify(response.data));
+      dispatch({ type: "LOGIN", payload: response.data });
+  
       showToast("Email verified successfully! Redirecting to dashboard...", "success");
       setTimeout(() => setCurrentStep('dashboard'), 1000);
     } catch (error) {
@@ -153,6 +157,7 @@ const Login = () => {
       setIsSubmitting(false);
     }
   };
+  
 
   
   useEffect(() => {
