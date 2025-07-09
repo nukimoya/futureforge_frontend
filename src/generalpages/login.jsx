@@ -47,6 +47,7 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [redirectCountdown, setRedirectCountdown] = useState(3); // 5 seconds
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState('login'); // 'login', 'verify', 'dashboard'
   const [verificationCode, setVerificationCode] = useState('');
@@ -275,6 +276,24 @@ const Login = () => {
     // ✅ Cleanup on unmount or re-render
     return () => clearInterval(timer);
   }, [codeSent]);
+
+  useEffect(() => {
+    if (currentStep !== 'dashboard') return;
+  
+    const interval = setInterval(() => {
+      setRedirectCountdown(prev => {
+        if (prev <= 1) {
+          window.location.href = '/dashboard';
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  
+    return () => clearInterval(interval);
+  }, [currentStep]);
+  
   
 
   const handleSendCode = async () => {
@@ -454,7 +473,7 @@ const Login = () => {
                 onClick={() => window.location.href = '/dashboard'}
                 className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 font-semibold"
               >
-                Go to Dashboard
+                Go to Dashboard ({redirectCountdown})
               </button>
             </div>
           </div>
