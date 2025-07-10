@@ -5,11 +5,13 @@ import { useAxios } from '../config/api';
 import { toast } from 'react-toastify';
 import SubmissionScreen from './testCompleted';
 import { AuthContext } from '../context/authContext';
+import { useRefreshUser } from '../hooks/useRefreshUser';
 
 const TestComponent = () => {
   const api = useAxios();
   const navigate = useNavigate();
   const { user, dispatch } = useContext(AuthContext);
+  const refreshUser = useRefreshUser(dispatch); 
 
   const [questions, setQuestions] = useState([]);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -154,6 +156,7 @@ const TestComponent = () => {
   
     try {
       const response = await api.post('/api/submit-test', payload);
+      await refreshUser();
       console.log('✅ Test submitted successfully:', response.data);
       setIsSubmitted(true);
     } catch (err) {
@@ -162,7 +165,7 @@ const TestComponent = () => {
     } finally {
       setSubmitting(false);
     }
-  }, [api, isCurrentQuestionAnswered, answers, questions, sessionId, submitting]); // Removed api and isCurrentQuestionAnswered
+  }, [api, isCurrentQuestionAnswered, answers, questions, sessionId, submitting, refreshUser]); // Removed api and isCurrentQuestionAnswered
   
   useEffect(() => {
     const handleKeyDown = (e) => {
