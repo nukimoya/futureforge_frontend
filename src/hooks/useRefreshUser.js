@@ -1,5 +1,5 @@
 // src/hooks/useRefreshUser.js
-import { useAxios } from './useAxios';
+import { useAxios } from '../config/api';
 import { useCallback } from 'react';
 
 export const useRefreshUser = (dispatch) => {
