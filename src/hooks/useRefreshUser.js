@@ -11,7 +11,7 @@ export const useRefreshUser = (dispatch) => {
 
       // ✅ Step 1: Extract token from current localStorage
       const existing = JSON.parse(localStorage.getItem('user'));
-      const token = existing?.token;
+      const token = existing?.data?.token;
 
       // ✅ Step 2: Merge token into updated user data
       const updatedUser = {
