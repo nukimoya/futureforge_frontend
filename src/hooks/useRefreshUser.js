@@ -9,21 +9,9 @@ export const useRefreshUser = (dispatch) => {
     try {
       const res = await api.get('/auth/current-user');
 
-      // ✅ Step 1: Extract token from current localStorage
-      const existing = JSON.parse(localStorage.getItem('user'));
-
-      const token = existing?.token;
-      console.log(token)
-
-      // ✅ Step 2: Merge token into updated user data
-      const updatedUser = {
-        ...res.data, // assuming this is the user object
-        token,
-      };
-
-      // ✅ Step 3: Save to localStorage and dispatch
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      dispatch({ type: 'LOGIN', payload: updatedUser });
+      // ✅ Save the returned data as-is (already has user + token structure)
+      localStorage.setItem('user', JSON.stringify(res.data));
+      dispatch({ type: 'LOGIN', payload: res.data });
 
     } catch (err) {
       console.error("❌ Failed to refresh user:", err);
