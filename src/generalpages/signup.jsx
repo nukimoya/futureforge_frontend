@@ -34,6 +34,7 @@ const Signup = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState('signup'); // 'signup', 'verify', 'login'
+  const [redirectCountdown, setRedirectCountdown] = useState(3); // 5 seconds
   const [verificationCode, setVerificationCode] = useState('');
   const [toast, setToast] = useState(null);
   const api = useAxios();
@@ -135,7 +136,22 @@ const Signup = () => {
     }
   };
   
+  useEffect(() => {
+    if (currentStep !== 'dashboard') return;
   
+    const interval = setInterval(() => {
+      setRedirectCountdown(prev => {
+        if (prev <= 1) {
+          window.location.href = '/dashboard';
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  
+    return () => clearInterval(interval);
+  }, [currentStep]);
 
   const handleVerification = async () => {
     // console.log("🔐 handleVerification triggered with code:", verificationCode);
@@ -299,7 +315,7 @@ const Signup = () => {
                 onClick={() => navigate('/login')}
                 className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 font-semibold"
               >
-                Continue to Login
+                Continue to Login ({redirectCountdown})
               </button>
             </div>
           </div>
