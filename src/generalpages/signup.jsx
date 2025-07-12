@@ -137,12 +137,12 @@ const Signup = () => {
   };
   
   useEffect(() => {
-    if (currentStep !== 'dashboard') return;
+    if (currentStep !== 'login') return;
   
     const interval = setInterval(() => {
       setRedirectCountdown(prev => {
         if (prev <= 1) {
-          window.location.href = '/dashboard';
+          window.location.href = '/login';
           clearInterval(interval);
           return 0;
         }

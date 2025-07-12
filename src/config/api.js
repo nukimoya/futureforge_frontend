@@ -10,7 +10,7 @@ export const useAxios = () => {
 
   const api = useMemo(() => {
     const instance = axios.create({
-      baseURL: 'https://ashamed-loren-samuel-dev-8703a6f6.koyeb.app/',
+      baseURL: 'https://futureforge-kikc.onrender.com/',
       timeout: 10000,
       withCredentials: true, 
       headers: {
