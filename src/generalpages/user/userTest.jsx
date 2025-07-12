@@ -12,13 +12,11 @@ const WelcomePage = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [showTestInstructions, setShowTestInstructions] = useState(false);
   const navigate = useNavigate();
-  const { 
-    // user,
-     dispatch } = useContext(AuthContext);
+  const { user, dispatch } = useContext(AuthContext);
   
-  const username = "Alex Johnson";
-  const email = "alex.johnson@email.com";
-  const role = "Professional";
+  const username = user?.data?.user?.username;
+  const email = user?.data?.user?.email;
+  const role = user?.data?.user?.role;
 
 
   const handleLogout = () => {
