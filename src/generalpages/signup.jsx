@@ -87,7 +87,7 @@ const Signup = () => {
   };
 
   const handleSubmit = async () => {
-    console.log("🔍 handleSubmit triggered with formData:", formData);
+    //console.log("🔍 handleSubmit triggered with formData:", formData);
   
     const newErrors = {};
     Object.keys(formData).forEach((key) => {
@@ -111,7 +111,7 @@ const Signup = () => {
           password: formData.password,
         });
   
-        console.log("🎉 Signup API success response:", response.data);
+        //console.log("🎉 Signup API success response:", response.data);
         showToast(
           "Account created! Check your email for a confirmation code.",
           "success"
